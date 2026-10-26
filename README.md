@@ -8,7 +8,7 @@
 
 > Это самодельный прибор для экспериментов, а не медицинское изделие. Прочитайте [SAFETY.md](SAFETY.md) до того, как надевать электроды.
 
-<p align="center"><a href="https://paperpit.github.io/DIY-EEG-OpenMind/docs/index.html"><img src="docs/img/device-rotate.gif" width="760" alt="Собранный прибор: плата ЭЭГ в прозрачном корпусе, к панели подключены электроды"></a></p>
+<p align="center"><a href="https://paperpit.github.io/DIY-EEG-OpenMind/docs/04-panel-enclosure-3d.html"><img src="docs/img/device.jpg" width="760" alt="Собранный прибор. Нажмите, чтобы открыть модель и покрутить её в 3D"></a><br><a href="https://paperpit.github.io/DIY-EEG-OpenMind/docs/04-panel-enclosure-3d.html">Покрутить прибор в 3D</a></p>
 
 ## Что получится
 
