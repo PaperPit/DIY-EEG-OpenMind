@@ -1,7 +1,6 @@
 // Low-Cost-EEG self-test firmware.
-// Put this file as src/main.cpp in a copy of the author's PlatformIO project
-// (Software/Firmware_Platformio_Project), keep lib/ADS1299 as is, build and upload.
-// Open the serial monitor at 115200. Commands: t = run all tests again, m = live monitor on/off.
+// Open this folder (firmware/selftest) in PlatformIO and upload.
+// Serial monitor: 115200. Commands: t = run all tests again, m = live monitor on/off.
 #include <Arduino.h>
 #include <ADS1299.h>
 #include <stdarg.h>
