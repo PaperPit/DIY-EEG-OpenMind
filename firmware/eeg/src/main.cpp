@@ -2,8 +2,8 @@
 // Based on Xavier Asghar, Low-Cost-EEG, GPL v3.
 // Sends 4 samples (112 bytes) per BLE notification so macOS can receive them.
 // The author's Windows receiver expects 224 bytes and does not decode this size.
-// 500 samples/s, gain 24. BIAS uses channel 1 and channel 2 (O1 and O2).
-// Press BOOT (SW3) once to leave lead-off mode before looking at alpha.
+// 250 samples/s, gain 24. BIAS uses channel 1 and channel 2 (O1 and O2).
+// SW3 (BOOT) toggles lead-off current. Turn it off before looking at alpha.
 #include <Arduino.h>
 #include <ADS1299.h>
 #include <BLEDevice.h>
@@ -37,14 +37,16 @@ void readADSDataTask(void * pvParameters);  // Core 1: Read Data from ADS1299
 void sendDataTask(void * pvParameters);     // Core 0: Send Data to PC
 
 // VARIABLES
-SemaphoreHandle_t drdySemaphore;            // Semaphore to signal when DRDY goes low 
-QueueHandle_t packetQueue;                  // Create a queue to pass 33-byte arrays between cores
+SemaphoreHandle_t drdySemaphore;            // Semaphore to signal when DRDY goes low
+SemaphoreHandle_t spiMutex;                 // Register writes must not share SPI with a sample read
+QueueHandle_t packetQueue;                  // Create a queue to pass 28-byte arrays between cores
 uint8_t sampleCounter = 0;
 volatile bool deviceConnected = false;      // Flag to track BLE connection status
+volatile uint32_t droppedSamples = 0;
 
 // HARDWARE BUTTON DEFINITION
 #define BOOT_BUTTON_PIN 0
-volatile bool triggerRecordMode = false; // Flag to trigger state change
+volatile uint32_t buttonEdges = 0;          // SW3 toggles lead-off; edges are debounced in loop()
 
 // --------------------------------------------------------------------------------------------------------------------------------------
 
@@ -78,6 +80,7 @@ void setup() {
 
   // Initialize Queue holding up to 256 packets of 28 bytes
   packetQueue = xQueueCreate(256, 28 * sizeof(uint8_t));
+  spiMutex = xSemaphoreCreateMutex();
 
   // BLUETOOTH LOW ENERGY SETUP
   BLEDevice::init(bleServerName);                               // Create the BLE Device
@@ -99,8 +102,13 @@ void setup() {
   digitalWrite(START_PIN, LOW);     // Pull start low to stop conversations
   delay(10);
   ADS.SDATAC();                     // Stop continuous data mode to allow register configuration
+  uint8_t id = ADS.RREG(ID);
+  if (id != 0x3E) {
+    Serial.printf("ADS1299 ID 0x%02X, expected 0x3E. Replace the chip. Streaming stopped.\n", id);
+    while (true) delay(1000);
+  }
   ADS.WREG(GPIO, 0b00000000);
-  ADS.WREG(CONFIG1, 0b10010101);    // Set SPS (110 = 250, 101 = 500, 100 = 1000)
+  ADS.WREG(CONFIG1, 0b10010110);    // 250 SPS (110 = 250, 101 = 500, 100 = 1000)
   ADS.WREG(CONFIG3, 0b11111110);    // Enable power-down reference buffer, bias measurement, internal bias ref, bias buffer and bias lead off
   ADS.WREG(CONFIG4, 0b00000010);    // Enable lead-off comparator
 
@@ -145,47 +153,52 @@ void setup() {
 
 // --------------------------------------------------------------------------------------------------------------------------------------
 
-void loop() {
-  // If the BOOT button is pressed, turn off lead off
-  if (triggerRecordMode) {
-    triggerRecordMode = false; // Reset flag
+bool leadOffEnabled = true;
 
-    // Stop conversations and stop continuous data mode
-    digitalWrite(START_PIN, LOW);
-    delay(10);
-    ADS.SDATAC();
-    
-    // 2. Check bias lead-off
-    uint8_t config3_val = ADS.RREG(CONFIG3); 
-    bool biasDisconnected = (config3_val & 0b00000001);
-    if (biasDisconnected) {
-      Serial.println("Bias Disconnected");
-    } else {
-      Serial.println("Bias Connected");
-    }
+void setLeadOff(bool enable) {
+  xSemaphoreTake(spiMutex, portMAX_DELAY);
+  digitalWrite(START_PIN, LOW);
+  delay(10);
+  ADS.SDATAC();
 
-    // Turn off lead off detection
-    ADS.WREG(LOFF_SENSP, 0b00000000); 
+  if (!enable) {
+    // BIAS_STAT is bit 1. Bit 0 is reserved and stays clear, so it cannot report the electrode.
+    uint8_t config3 = ADS.RREG(CONFIG3);
+    Serial.println((config3 & 0b00000010) ? "Bias Disconnected" : "Bias Connected");
+    ADS.WREG(LOFF_SENSP, 0b00000000);
     ADS.WREG(LOFF_SENSN, 0b00000000);
-    ADS.WREG(CONFIG3, 0b11111100);
-    
-    // Restart continuous data mode
-    ADS.RDATAC();
-    digitalWrite(START_PIN, HIGH);
-    delay(10);
-    
-    Serial.println("Lead-off disabled\n");
-    vTaskDelete(NULL);
+    ADS.WREG(CONFIG3, 0b11111100);   // bias buffer stays on, bias lead-off sense off
+  } else {
+    ADS.WREG(CONFIG3, 0b11111110);
+    ADS.WREG(LOFF_SENSP, 0b11111111);
+    ADS.WREG(LOFF_SENSN, 0b00000001);
   }
 
-  // Delay to yeild to other tasks
-  delay(100);
+  ADS.RDATAC();
+  digitalWrite(START_PIN, HIGH);
+  delay(10);
+  xSemaphoreGive(spiMutex);
+  leadOffEnabled = enable;
+  Serial.println(enable ? "Lead-off enabled\n" : "Lead-off disabled\n");
+}
+
+void loop() {
+  static uint32_t seenEdges = 0;
+  static uint32_t lastToggleMs = 0;
+  if (buttonEdges != seenEdges) {
+    seenEdges = buttonEdges;
+    if (millis() - lastToggleMs > 300) {
+      lastToggleMs = millis();
+      setLeadOff(!leadOffEnabled);
+    }
+  }
+  delay(50);
 }
 
 // --------------------------------------------------------------------------------------------------------------------------------------
 
 void IRAM_ATTR buttonISR() {
-  triggerRecordMode = true;
+  buttonEdges++;
 }
 
 // --------------------------------------------------------------------------------------------------------------------------------------
@@ -228,15 +241,17 @@ void readADSDataTask(void * pvParameters) {
   for(;;) {
     // Sleep until ISR gives semaaphore
     if (xSemaphoreTake(drdySemaphore, portMAX_DELAY) == pdTRUE) {
-      
-      // Assign Sample Counter
+      xSemaphoreTake(spiMutex, portMAX_DELAY);
       dataPacket[0] = sampleCounter++;
-
-      // Read SPI Data
       ADS.updateDataPacket(dataPacket);
+      xSemaphoreGive(spiMutex);
 
-      // Send to the Bluetooth Core
-      xQueueSend(packetQueue, dataPacket, 0); 
+      if (xQueueSend(packetQueue, dataPacket, 0) != pdTRUE) {
+        droppedSamples++;
+        if (droppedSamples == 1 || droppedSamples % 50 == 0) {
+          Serial.printf("Dropped %u samples\n", droppedSamples);
+        }
+      }
     }
   }
 }

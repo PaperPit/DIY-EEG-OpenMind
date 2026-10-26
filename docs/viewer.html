@@ -34,7 +34,7 @@ canvas{width:100%;height:88px;background:transparent;display:block}
 <div class="wrap">
 <p style="margin:0 0 12px"><a href="index.html" style="display:inline-block;background:var(--accent);color:#fff;text-decoration:none;font:600 13px/1 system-ui,sans-serif;padding:8px 12px;border-radius:999px">← Главное меню</a></p>
 <h1>Просмотр сигнала</h1>
-<p class="lead">Восемь каналов с платы, полоса 1–40 Гц и режектор 50 Гц. Откройте эту страницу по адресу сайта в Chrome или Edge: с диска Bluetooth не разрешат. Safari к Bluetooth из браузера не подключается. Электроды на голове только при питании от аккумулятора.</p>
+<p class="lead">Восемь каналов с платы, 250 отсчётов/с, полоса 1–40 Гц и режектор 50 Гц. Откройте эту страницу по адресу сайта в Chrome или Edge: с диска Bluetooth не разрешат. Safari к Bluetooth из браузера не подключается. Электроды на голове только при питании от аккумулятора. Для первой записи нужны мокрые Ag/AgCl: сухой пассивный контакт на этой схеме даёт помеху 50 Гц уровня альфы.</p>
 <div class="panel">
 <table>
 <tr><td class="mono">К1</td><td>O1, затылок слева</td></tr>
@@ -42,7 +42,7 @@ canvas{width:100%;height:88px;background:transparent;display:block}
 <tr><td class="mono">REF</td><td>сосцевидный отросток слева</td></tr>
 <tr><td class="mono">BIAS</td><td>лоб</td></tr>
 </table>
-<p>После того как электроды на месте, нажмите SW3 один раз. До этого прошивка проверяет обрыв и пускает ток в электроды. Закройте глаза на 20–30 секунд: на спектре К1 и К2 в полосе 8–12 Гц должен вырасти альфа-ритм.</p>
+<p>После того как электроды на месте, нажмите SW3. Это выключает ток проверки контакта. Повторное нажатие включает его снова. Пока ток включён, на спектре ещё не альфа. Закройте глаза на 20–30 секунд: на спектре К1 и К2 в полосе 8–12 Гц должен вырасти альфа-ритм. Счётчик «потеряно» считает и короткие, и длинные обрывы Bluetooth.</p>
 </div>
 <div class="row">
 <button id="connect" type="button">Подключить ESP32_EEG_DATA</button>
@@ -74,16 +74,16 @@ canvas{width:100%;height:88px;background:transparent;display:block}
 <script>
 const SERVICE = "91bad492-b950-4226-aa2b-4ede9fa42f59";
 const CHAR = "cba1d466-344c-4be3-ab3f-189f80dd7518";
-const SPS = 500;
+const SPS = 250;
 const UV = 4.5e6 / (24 * 8388608);
 const N = 8;
 const VIEW = 1000;
 const FFTN = 512;
 const names = ["К1 · O1","К2 · O2","К3","К4","К5","К6","К7","К8"];
 
-const HP = [0.9911535951016635, -1.982307190203327, 0.9911535951016635, -1.9822289297925286, 0.9823854506141252];
-const LP = [0.046131802093312926, 0.09226360418662585, 0.046131802093312926, -1.3072850288493236, 0.49181223722257533];
-const NOTCH = [0.9883808858331896, -1.5992338671088304, 0.9883808858331896, -1.5992338671088304, 0.9767617716663792];
+const HP = [0.9823854385260917, -1.9647708770521835, 0.9823854385260917, -1.964460580205232, 0.965081173899135];
+const LP = [0.14532388387704243, 0.29064776775408485, 0.14532388387704243, -0.6710290907740962, 0.2523246262822659];
+const NOTCH = [0.9813339196216473, -0.6064977166393354, 0.9813339196216473, -0.6064977166393354, 0.9626678392432947];
 
 function Biquad(c) {
   this.b0=c[0]; this.b1=c[1]; this.b2=c[2]; this.a1=c[3]; this.a2=c[4];
@@ -149,7 +149,7 @@ function onPacket(buf) {
     const counter = view.getUint8(o);
     if (expected !== null) {
       const miss = (counter - expected) & 255;
-      if (miss > 0 && miss < 50) dropped += miss;
+      if (miss > 0) dropped += miss;
     }
     expected = (counter + 1) & 255;
     const values = new Array(N);
