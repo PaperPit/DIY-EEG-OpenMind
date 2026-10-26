@@ -110,8 +110,7 @@ void runTests() {
   ADS.WREG(BIAS_SENSN, 0x00);
 
   // 4. Sample rate. Count finished reads for 1 s.
-  //    If a sample is not read, DRDY only pulses high for about 2 µs, so an
-  //    interrupt tally misses edges on a working board.
+  //    Counting completed reads also proves that SPI reads keep up at 250 SPS.
   ADS.RDATAC();
   digitalWrite(START_PIN, HIGH);
   int32_t ch[8];
@@ -132,14 +131,16 @@ void runTests() {
 
   double mean, rms; int32_t mn, mx;
 
-  // 6. Analog span seen from inside. MUX 011 measures (AVDD - AVSS) / 4.
-  //    LM27762 sets ±2.5 V, so channels 3 and 4 should read about 5.0 V, not DVDD.
+  // 6. DVDD seen from inside. MUX 011 (MVDD), gain 1.
+  //    ADS1299 datasheet, Power-Supply Measurements (MVDD): channels 3 and 4
+  //    measure DVDD / 4; channels 1, 2 and 5-8 measure (AVDD + AVSS) / 2.
+  //    So CH3 and CH4 must read about 3.3 V here, the same as TP4.
   configure(0x03, 0xC0, 0x00);
   if (collect(250)) {
     for (int i = 2; i <= 3; i++) {
       stats(i, 250, mean, rms, mn, mx);
-      double span = mean * lsbVolts(1) * 4.0;
-      result(i == 2 ? "AVDD-AVSS via CH3" : "AVDD-AVSS via CH4", span > 4.7 && span < 5.3, "%.3f V (expected 5.0)", span);
+      double dvdd = mean * lsbVolts(1) * 4.0;
+      result(i == 2 ? "DVDD via CH3" : "DVDD via CH4", dvdd > 3.1 && dvdd < 3.5, "%.3f V (expected 3.3)", dvdd);
     }
   } else result("Supply measure", false, "no DRDY");
 

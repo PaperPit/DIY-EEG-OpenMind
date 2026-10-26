@@ -162,9 +162,9 @@ void setLeadOff(bool enable) {
   ADS.SDATAC();
 
   if (!enable) {
-    // BIAS_STAT is bit 1. Bit 0 is reserved and stays clear, so it cannot report the electrode.
+    // CONFIG3 bit 0 is BIAS_STAT (read-only, 1 = BIAS electrode off). Bit 1 is BIAS_LOFF_SENS.
     uint8_t config3 = ADS.RREG(CONFIG3);
-    Serial.println((config3 & 0b00000010) ? "Bias Disconnected" : "Bias Connected");
+    Serial.println((config3 & 0b00000001) ? "Bias Disconnected" : "Bias Connected");
     ADS.WREG(LOFF_SENSP, 0b00000000);
     ADS.WREG(LOFF_SENSN, 0b00000000);
     ADS.WREG(CONFIG3, 0b11111100);   // bias buffer stays on, bias lead-off sense off
