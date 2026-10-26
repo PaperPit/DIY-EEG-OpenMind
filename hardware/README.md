@@ -4,7 +4,7 @@
 
 | Файл | Зачем |
 |---|---|
-| `pcb/gerber-rezonit.zip` | Gerber и сверловка для [Резонита](https://www.rezonit.ru/), смещение сверловки исправлено. Внутри `README_ЗАКАЗ.txt` со структурой слоёв |
+| `pcb/gerber-rezonit.zip` | Gerber и сверловка для [Резонита](https://www.rezonit.ru/), смещение сверловки исправлено. Внутри `README.txt` со структурой слоёв |
 | `pcb/stencil-rezonit.zip` | Трафареты TOP и BOTTOM, 0,12 мм |
 | `pcb/gerber-jlcpcb.zip` | Тот же Gerber для заказа за границей |
 | `bom.csv` | Перечень элементов, номиналы сверены со схемой |
