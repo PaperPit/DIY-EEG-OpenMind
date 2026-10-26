@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Просмотр сигнала · OpenMind</title>
+<style>
+:root{--bg:#eef0eb;--panel:#fbfcf9;--ink:#1c231f;--muted:#5a6660;--line:#d2d8cf;--accent:#b8611a;--ok:#2f7a4a;--bad:#a2301f;--alpha:#d7e8dc}
+@media (prefers-color-scheme: dark){:root{--bg:#101412;--panel:#191f1c;--ink:#e4e9e5;--muted:#97a39c;--line:#2a332e;--accent:#e58a42;--ok:#6cc78f;--bad:#f08a74;--alpha:#1d3326;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:1100px;margin:0 auto;padding:24px 16px 48px}
+h1{font-size:28px;line-height:1.2;margin:0 0 6px}
+.lead{color:var(--muted);max-width:68ch;margin:0 0 16px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:12px 0}
+button{font:600 15px/1 inherit;background:var(--accent);color:#fff;border:0;border-radius:9px;padding:10px 14px;cursor:pointer}
+button:disabled{opacity:.45;cursor:default}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin:12px 0}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+.status{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+td{padding:4px 10px 4px 0;vertical-align:top}
+canvas{width:100%;height:88px;background:transparent;display:block}
+#spectrum{height:180px}
+.ch{margin:8px 0}
+.ch b{font-size:13px}
+.tag{display:inline-block;min-width:8px;height:8px;border-radius:99px;background:var(--ok);margin-right:6px}
+.tag.off{background:var(--bad)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}
+.warn{border-left:3px solid var(--accent);padding:8px 12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Просмотр сигнала</h1>
+<p class="lead">Восемь каналов с платы, полоса 1–40 Гц и режектор 50 Гц. Откройте эту страницу по адресу сайта в Chrome или Edge: с диска Bluetooth не разрешат. Safari к Bluetooth из браузера не подключается. Электроды на голове только при питании от аккумулятора.</p>
+<div class="panel">
+<table>
+<tr><td class="mono">К1</td><td>O1, затылок слева</td></tr>
+<tr><td class="mono">К2</td><td>O2, затылок справа</td></tr>
+<tr><td class="mono">REF</td><td>сосцевидный отросток слева</td></tr>
+<tr><td class="mono">BIAS</td><td>лоб</td></tr>
+</table>
+<p>После того как электроды на месте, нажмите SW3 один раз. До этого прошивка проверяет обрыв и пускает ток в электроды. Закройте глаза на 20–30 секунд: на спектре К1 и К2 в полосе 8–12 Гц должен вырасти альфа-ритм.</p>
+</div>
+<div class="row">
+<button id="connect" type="button">Подключить ESP32_EEG_DATA</button>
+<span class="status" id="status">нет соединения</span>
+</div>
+<p class="status" id="loff"></p>
+<div id="charts"></div>
+<div class="panel">
+<div class="row">
+<b>Спектр</b>
+<label>канал
+<select id="specCh">
+<option value="0">К1 · O1</option>
+<option value="1">К2 · O2</option>
+<option value="2">К3</option>
+<option value="3">К4</option>
+<option value="4">К5</option>
+<option value="5">К6</option>
+<option value="6">К7</option>
+<option value="7">К8</option>
+</select>
+</label>
+<span class="status" id="alpha">альфа —</span>
+</div>
+<canvas id="spectrum" width="1000" height="180"></canvas>
+</div>
+<p class="warn">Прошивка <span class="mono">firmware/eeg</span> шлёт по 112 байт. Программа автора EEG_BLE_Receiver.exe ждёт 224 байта и этот поток не показывает.</p>
+</div>
+<script>
+const SERVICE = "91bad492-b950-4226-aa2b-4ede9fa42f59";
+const CHAR = "cba1d466-344c-4be3-ab3f-189f80dd7518";
+const SPS = 500;
+const UV = 4.5e6 / (24 * 8388608);
+const N = 8;
+const VIEW = 1000;
+const FFTN = 512;
+const names = ["К1 · O1","К2 · O2","К3","К4","К5","К6","К7","К8"];
+
+const HP = [0.9911535951016635, -1.982307190203327, 0.9911535951016635, -1.9822289297925286, 0.9823854506141252];
+const LP = [0.046131802093312926, 0.09226360418662585, 0.046131802093312926, -1.3072850288493236, 0.49181223722257533];
+const NOTCH = [0.9883808858331896, -1.5992338671088304, 0.9883808858331896, -1.5992338671088304, 0.9767617716663792];
+
+function Biquad(c) {
+  this.b0=c[0]; this.b1=c[1]; this.b2=c[2]; this.a1=c[3]; this.a2=c[4];
+  this.x1=this.x2=this.y1=this.y2=0;
+}
+Biquad.prototype.step = function(x) {
+  const y = this.b0*x + this.b1*this.x1 + this.b2*this.x2 - this.a1*this.y1 - this.a2*this.y2;
+  this.x2=this.x1; this.x1=x; this.y2=this.y1; this.y1=y;
+  return y;
+};
+
+const rings = Array.from({length:N}, () => new Float32Array(VIEW));
+const fftBuf = Array.from({length:N}, () => new Float32Array(FFTN));
+const writeAt = new Array(N).fill(0);
+const filters = Array.from({length:N}, () => [new Biquad(HP), new Biquad(HP), new Biquad(LP), new Biquad(LP), new Biquad(NOTCH)]);
+let expected = null;
+let dropped = 0;
+let got = 0;
+let loffP = 0;
+let loffRef = 0;
+
+const charts = document.getElementById("charts");
+const canvases = [];
+for (let i = 0; i < N; i++) {
+  const box = document.createElement("div");
+  box.className = "ch";
+  const title = document.createElement("b");
+  title.textContent = names[i];
+  const canvas = document.createElement("canvas");
+  canvas.width = 1000;
+  canvas.height = i < 2 ? 120 : 64;
+  canvas.style.height = i < 2 ? "120px" : "64px";
+  box.append(title, canvas);
+  charts.append(box);
+  canvases.push(canvas);
+}
+
+function filt(ch, x) {
+  let y = x;
+  for (const b of filters[ch]) y = b.step(y);
+  return y;
+}
+
+function pushSample(values, status) {
+  for (let ch = 0; ch < N; ch++) {
+    const y = filt(ch, values[ch]);
+    rings[ch][writeAt[ch] % VIEW] = y;
+    fftBuf[ch][writeAt[ch] % FFTN] = y;
+    writeAt[ch]++;
+  }
+  loffP = 0;
+  for (let j = 0; j < 8; j++) if ((status >> (12 + j)) & 1) loffP |= 1 << j;
+  loffRef = (status >> 4) & 1;
+  got++;
+}
+
+function onPacket(buf) {
+  const view = new DataView(buf);
+  if (view.byteLength % 28 !== 0) return;
+  const count = view.byteLength / 28;
+  for (let i = 0; i < count; i++) {
+    const o = i * 28;
+    const counter = view.getUint8(o);
+    if (expected !== null) {
+      const miss = (counter - expected) & 255;
+      if (miss > 0 && miss < 50) dropped += miss;
+    }
+    expected = (counter + 1) & 255;
+    const values = new Array(N);
+    for (let ch = 0; ch < N; ch++) {
+      const p = o + 4 + ch * 3;
+      let raw = (view.getUint8(p) << 16) | (view.getUint8(p + 1) << 8) | view.getUint8(p + 2);
+      if (raw & 0x800000) raw -= 0x1000000;
+      values[ch] = raw * UV;
+    }
+    const status = (view.getUint8(o + 1) << 16) | (view.getUint8(o + 2) << 8) | view.getUint8(o + 3);
+    pushSample(values, status);
+  }
+}
+
+function drawTrace(canvas, ch) {
+  const ctx = canvas.getContext("2d");
+  const w = canvas.width, h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+  const ring = rings[ch];
+  const n = Math.min(writeAt[ch], VIEW);
+  if (n < 8) return;
+  let peak = 20;
+  const start = writeAt[ch] - n;
+  for (let i = 0; i < n; i++) peak = Math.max(peak, Math.abs(ring[(start + i) % VIEW]));
+  peak = Math.min(peak * 1.2, 500);
+  ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue("--line");
+  ctx.beginPath();
+  ctx.moveTo(0, h / 2);
+  ctx.lineTo(w, h / 2);
+  ctx.stroke();
+  ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue("--accent");
+  ctx.beginPath();
+  for (let i = 0; i < n; i++) {
+    const y = h / 2 - (ring[(start + i) % VIEW] / peak) * (h / 2 - 4);
+    const x = (i / (n - 1)) * (w - 1);
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+}
+
+function fftMag(ch) {
+  const n = FFTN;
+  const kMax = Math.floor(45 * n / SPS) + 4;
+  const mag = new Float32Array(kMax + 1);
+  const filled = Math.min(writeAt[ch], n);
+  const start = writeAt[ch] - filled;
+  const xs = new Float32Array(filled);
+  for (let i = 0; i < filled; i++) {
+    const w = 0.5 * (1 - Math.cos((2 * Math.PI * i) / (filled - 1 || 1)));
+    xs[i] = fftBuf[ch][(start + i) % n] * w;
+  }
+  for (let k = 1; k <= kMax; k++) {
+    let re = 0, im = 0;
+    const ang = -2 * Math.PI * k / n;
+    for (let i = 0; i < filled; i++) {
+      re += xs[i] * Math.cos(ang * i);
+      im += xs[i] * Math.sin(ang * i);
+    }
+    mag[k] = Math.hypot(re, im);
+  }
+  return mag;
+}
+
+function drawSpectrum() {
+  const canvas = document.getElementById("spectrum");
+  const ctx = canvas.getContext("2d");
+  const w = canvas.width, h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+  const ch = Number(document.getElementById("specCh").value);
+  if (writeAt[ch] < 64) return;
+  const mag = fftMag(ch);
+  const hz = (k) => k * SPS / FFTN;
+  const xOf = (f) => (f / 45) * (w - 20) + 10;
+  const a0 = Math.round(8 * FFTN / SPS);
+  const a1 = Math.round(12 * FFTN / SPS);
+  ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--alpha");
+  ctx.fillRect(xOf(8), 16, xOf(12) - xOf(8), h - 32);
+  let peak = 1;
+  const kMax = Math.floor(45 * FFTN / SPS);
+  for (let k = 1; k <= kMax; k++) peak = Math.max(peak, mag[k]);
+  ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue("--ink");
+  ctx.beginPath();
+  for (let k = 1; k <= kMax; k++) {
+    const x = xOf(hz(k));
+    const y = h - 16 - (mag[k] / peak) * (h - 36);
+    if (k === 1) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--muted");
+  ctx.font = "12px ui-monospace, monospace";
+  for (const f of [0, 10, 20, 30, 40]) ctx.fillText(String(f), xOf(f) - 6, h - 2);
+  let best = 0, bestF = 0, sum = 0, cnt = 0;
+  for (let k = a0; k <= a1; k++) {
+    sum += mag[k]; cnt++;
+    if (mag[k] > best) { best = mag[k]; bestF = hz(k); }
+  }
+  const around = (mag[Math.max(1, a0 - 4)] + mag[Math.min(mag.length - 1, a1 + 4)]) / 2;
+  const mean = cnt ? sum / cnt : 0;
+  document.getElementById("alpha").textContent =
+    "альфа " + bestF.toFixed(1) + " Гц, относительно соседних полос " + (around > 0 ? (mean / around).toFixed(1) : "—");
+}
+
+function paint() {
+  for (let ch = 0; ch < N; ch++) drawTrace(canvases[ch], ch);
+  drawSpectrum();
+  if (got) {
+    const bits = [];
+    for (let i = 0; i < 8; i++) bits.push("К" + (i + 1) + ((loffP >> i) & 1 ? " обрыв" : " ок"));
+    bits.push("REF " + (loffRef ? "обрыв" : "ок"));
+    document.getElementById("loff").textContent = bits.join(" · ");
+  }
+  document.getElementById("status").textContent =
+    (got ? "идёт поток" : "подключено, жду данные") + " · потеряно " + dropped;
+  requestAnimationFrame(paint);
+}
+
+document.getElementById("connect").addEventListener("click", async () => {
+  const status = document.getElementById("status");
+  if (!navigator.bluetooth) {
+    status.textContent = "Этот браузер не умеет Bluetooth. Откройте страницу в Chrome или Edge.";
+    return;
+  }
+  try {
+    const device = await navigator.bluetooth.requestDevice({
+      filters: [{ name: "ESP32_EEG_DATA" }],
+      optionalServices: [SERVICE]
+    });
+    status.textContent = "соединение…";
+    const server = await device.gatt.connect();
+    const service = await server.getPrimaryService(SERVICE);
+    const ch = await service.getCharacteristic(CHAR);
+    await ch.startNotifications();
+    expected = null; dropped = 0; got = 0;
+    ch.addEventListener("characteristicvaluechanged", (ev) => {
+      const view = ev.target.value;
+      onPacket(view.buffer.slice(view.byteOffset, view.byteOffset + view.byteLength));
+    });
+    device.addEventListener("gattserverdisconnected", () => {
+      status.textContent = "плата отключилась";
+    });
+    status.textContent = "подключено";
+  } catch (err) {
+    status.textContent = "не удалось подключиться: " + (err && err.message ? err.message : err);
+  }
+});
+
+requestAnimationFrame(paint);
+</script>
+</body>
+</html>
