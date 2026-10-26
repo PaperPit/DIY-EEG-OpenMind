@@ -18,9 +18,6 @@ ADS1299 ADS;
 
 #define N_SAMPLES  1000            // 4 s at 250 SPS
 
-volatile uint32_t drdyCount = 0;
-void IRAM_ATTR onDrdy() { drdyCount++; }
-
 static int32_t buf[8][N_SAMPLES];
 static uint8_t lastStatus[3];
 static int fails = 0;
@@ -113,27 +110,37 @@ void runTests() {
   ADS.WREG(BIAS_SENSP, 0x00);
   ADS.WREG(BIAS_SENSN, 0x00);
 
-  // 4. DRDY rate
+  // 4. Sample rate. Count finished reads for 1 s.
+  //    If a sample is not read, DRDY only pulses high for about 2 µs, so an
+  //    interrupt tally misses edges on a working board.
   ADS.RDATAC();
   digitalWrite(START_PIN, HIGH);
-  drdyCount = 0; delay(1000);
-  uint32_t rate = drdyCount;
-  result("DRDY rate", rate >= 245 && rate <= 255, "%u Hz (expected 250)", rate);
+  int32_t ch[8];
+  if (!readSample(ch, 100)) {
+    result("DRDY rate", false, "no DRDY");
+  } else {
+    uint32_t t0 = millis();
+    uint32_t reads = 0;
+    while (millis() - t0 < 1000) {
+      if (readSample(ch, 10)) reads++;
+    }
+    result("DRDY rate", reads >= 245 && reads <= 255, "%u Hz (expected 250)", reads);
+  }
 
   // 5. Status word must start with 0xC (checks DOUT alignment)
-  int32_t ch[8];
   bool got = readSample(ch);
   result("Status header", got && (lastStatus[0] >> 4) == 0xC, "0x%X (expected 0xC)", lastStatus[0] >> 4);
 
   double mean, rms; int32_t mn, mx;
 
-  // 6. DVDD seen from inside: MUX = supply, gain 1. Channels 3 and 4 measure DVDD / 4.
+  // 6. Analog span seen from inside. MUX 011 measures (AVDD - AVSS) / 4.
+  //    LM27762 sets ±2.5 V, so channels 3 and 4 should read about 5.0 V, not DVDD.
   configure(0x03, 0xC0, 0x00);
   if (collect(250)) {
     for (int i = 2; i <= 3; i++) {
       stats(i, 250, mean, rms, mn, mx);
-      double dvdd = mean * lsbVolts(1) * 4.0;
-      result(i == 2 ? "DVDD via CH3" : "DVDD via CH4", dvdd > 3.1 && dvdd < 3.5, "%.3f V (expected 3.3)", dvdd);
+      double span = mean * lsbVolts(1) * 4.0;
+      result(i == 2 ? "AVDD-AVSS via CH3" : "AVDD-AVSS via CH4", span > 4.7 && span < 5.3, "%.3f V (expected 5.0)", span);
     }
   } else result("Supply measure", false, "no DRDY");
 
@@ -207,7 +214,6 @@ void setup() {
   while (!Serial && millis() - t0 < 5000) delay(10);
   delay(500);
   ADS.setup(DRDY_PIN, CS_PIN, SCK_PIN, MISO_PIN, MOSI_PIN, RESET_PIN, START_PIN);
-  attachInterrupt(digitalPinToInterrupt(DRDY_PIN), onDrdy, FALLING);
   runTests();
 }
 
