@@ -1,10 +1,14 @@
 # DIY-EEG-OpenMind · Народное ЭЭГ
 
+<p align="center"><a href="https://paperpit.github.io/DIY-EEG-OpenMind/docs/index.html"><img src="docs/img/start-here.svg" width="760" alt="Начните отсюда: интерактивные инструкции онлайн"></a></p>
+
+<p align="center"><b>👉 Начинайте изучение здесь: <a href="https://paperpit.github.io/DIY-EEG-OpenMind/docs/index.html">paperpit.github.io/DIY-EEG-OpenMind/docs/index.html</a></b><br>Ничего не нужно скачивать: маршрут сборки и 3D-инструкции открываются прямо в браузере.</p>
+
 Восьмиканальный ЭЭГ для нейрофидбека и экспериментов с BCI, который можно собрать дома. В основе открытая плата [Low-Cost-EEG](https://github.com/XavierAsghar/Low-Cost-EEG) (ADS1299 + ESP32-S3, Bluetooth). Этот репозиторий добавляет к ней всё, чего не хватает для повторения сборки в России: пошаговые 3D-инструкции на русском, файлы для заказа платы в Резоните, списки покупок в Чип и Дипе, на AliExpress и Ozon, прошивку самотеста, корпус из оргстекла и панель для электродов TouchProof.
 
 > Это самодельный прибор для экспериментов, а не медицинское изделие. Прочитайте [SAFETY.md](SAFETY.md) до того, как надевать электроды.
 
-<p align="center"><img src="docs/img/device-rotate.gif" width="760" alt="Собранный прибор: плата ЭЭГ в прозрачном корпусе, к панели подключены электроды"></p>
+<p align="center"><a href="https://paperpit.github.io/DIY-EEG-OpenMind/docs/index.html"><img src="docs/img/device-rotate.gif" width="760" alt="Собранный прибор: плата ЭЭГ в прозрачном корпусе, к панели подключены электроды"></a></p>
 
 ## Что получится
 
@@ -17,7 +21,7 @@
 
 ## С чего начать
 
-Скачайте репозиторий (**Code → Download ZIP**), распакуйте и откройте **[docs/index.html](docs/index.html)** в Chrome, Edge или Firefox. Это интерактивная стартовая страница: маршрут из 6 этапов с миниатюрами всех 43 шагов и прогрессом, подсказки по интерфейсу и ссылки на все файлы. Все 3D-инструкции работают без интернета, three.js встроен в файлы.
+Откройте **[стартовую страницу онлайн](https://paperpit.github.io/DIY-EEG-OpenMind/docs/index.html)**. Чтобы работать без интернета, скачайте репозиторий (**Code → Download ZIP**), распакуйте и откройте **[docs/index.html](docs/index.html)** в Chrome, Edge или Firefox. Это интерактивная стартовая страница: маршрут из 6 этапов с миниатюрами всех 43 шагов и прогрессом, подсказки по интерфейсу и ссылки на все файлы. Все 3D-инструкции работают без интернета, three.js встроен в файлы.
 
 ## Маршрут
 

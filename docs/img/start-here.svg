@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="120" viewBox="0 0 760 120">
+<defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#b8611a"/><stop offset="1" stop-color="#d9822f"/></linearGradient></defs>
+<rect width="760" height="120" rx="20" fill="url(#g)"/>
+<circle cx="70" cy="60" r="34" fill="#fff" fill-opacity=".18"/>
+<path d="M60 42 L86 60 L60 78 Z" fill="#fff"/>
+<text x="126" y="54" font-family="Segoe UI,Helvetica,Arial,sans-serif" font-size="27" font-weight="700" fill="#fff">НАЧНИТЕ ОТСЮДА: инструкции онлайн</text>
+<text x="126" y="88" font-family="Segoe UI,Helvetica,Arial,sans-serif" font-size="19" fill="#fff" fill-opacity=".92">Маршрут сборки и 3D-модели всех 43 шагов прямо в браузере</text>
+</svg>
