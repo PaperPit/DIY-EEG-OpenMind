@@ -1,0 +1,5 @@
+*.zip binary
+*.pdf binary
+*.dxf -text
+*.csv -text
+*.html linguist-documentation

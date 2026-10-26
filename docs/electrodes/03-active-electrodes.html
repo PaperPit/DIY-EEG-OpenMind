@@ -1,0 +1,341 @@
+<title>Активные ЭЭГ-электроды</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: лист техпаспорта, как у обзора электродов; схема, шумовой бюджет и таблицы в своих скролл-контейнерах */
+:root{
+  --bg:#f3f5f4; --paper:#ffffff; --fg:#17201d; --muted:#5b6a65; --line:#d5ddda;
+  --accent:#0d7a64; --accent-soft:#dcefe9; --silver:#8a979a; --wire:#2b3a36;
+  --good:#2f7d32; --warn:#a86a00; --bad:#b3362c;
+  --f-display:"Unbounded","Golos Text",system-ui,sans-serif;
+  --f-body:"Golos Text",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"Consolas",monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1513; --paper:#161e1b; --fg:#e4ebe8; --muted:#94a39e; --line:#2a3632;
+  --accent:#4cc3a5; --accent-soft:#183a31; --silver:#7f8d90; --wire:#c9d6d1;
+  --good:#6cc070; --warn:#e0a640; --bad:#ef7a6f; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1513; --paper:#161e1b; --fg:#e4ebe8; --muted:#94a39e; --line:#2a3632;
+  --accent:#4cc3a5; --accent-soft:#183a31; --silver:#7f8d90; --wire:#c9d6d1;
+  --good:#6cc070; --warn:#e0a640; --bad:#ef7a6f; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:16px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:32px 64px}
+.wrap{max-width:1040px;margin:0 auto;display:grid;gap:48px}
+.prose{max-width:68ch}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;line-height:1.2;margin:0}
+h1{font-size:clamp(28px,5vw,42px);font-weight:700;letter-spacing:-.01em}
+h2{font-size:clamp(20px,3vw,26px);font-weight:500;margin-bottom:16px}
+h3{font-size:17px;font-weight:500;margin-bottom:6px}
+p{margin:0 0 12px}
+a{color:var(--accent)}
+a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.mono{font-family:var(--f-mono);font-size:.92em}
+header{display:grid;gap:14px}
+header .lead{font-size:18px;color:var(--muted);max-width:64ch;margin:0}
+.verdict{background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:6px;padding:20px 22px;display:grid;gap:12px}
+.verdict ul{margin:0;padding-left:20px;display:grid;gap:8px}
+.verdict b{color:var(--accent)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.kpi{border-top:2px solid var(--line);padding-top:8px}
+.kpi .v{font-family:var(--f-mono);font-size:22px;font-weight:600;font-variant-numeric:tabular-nums}
+.kpi .l{font-size:14px;color:var(--muted)}
+.scroll{overflow-x:auto;background:var(--paper);border:1px solid var(--line);border-radius:6px}
+svg text{font-family:var(--f-mono);font-size:12px;fill:var(--fg)}
+svg .m{fill:var(--muted);font-size:11px}
+svg .w{stroke:var(--wire);stroke-width:1.6;fill:none}
+table{border-collapse:collapse;width:100%;min-width:820px;font-size:14px}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+th{font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;background:var(--bg)}
+td:first-child{font-weight:600;min-width:160px}
+.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.pill{display:inline-block;font-family:var(--f-mono);font-size:11px;padding:2px 8px;border-radius:99px;border:1px solid currentColor;white-space:nowrap}
+.ok{color:var(--good)} .mid{color:var(--warn)} .no{color:var(--bad)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px}
+.two > div{min-width:0}
+.box{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:18px}
+.box ul{margin:6px 0 0;padding-left:18px}
+.box li{margin-bottom:6px}
+.calc{background:var(--accent-soft);border-radius:6px;padding:18px 20px;font-family:var(--f-mono);font-size:14px;line-height:1.7;overflow-x:auto;white-space:nowrap}
+ol.plan{display:grid;gap:14px;padding-left:22px;margin:0}
+ol.plan li{max-width:70ch}
+ul.src{padding-left:18px;font-size:14px;columns:2 320px;column-gap:32px}
+ul.src li{break-inside:avoid;margin-bottom:6px}
+.note{font-size:14px;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">BrainAI · Low-Cost-EEG (ADS1299, ±2,5 В) · разбор на 25.10.2026</div>
+  <h1>Активные электроды: стоит ли делать</h1>
+  <p class="lead">Насколько активный электрод лучше пассивного сухого и хуже мокрого, что он на самом деле исправляет, а что нет, и как собрать его под вашу плату своими руками.</p>
+</header>
+
+<section class="verdict" aria-labelledby="v">
+  <h2 id="v" style="margin:0">Вывод</h2>
+  <ul>
+    <li><b>Сделать реально.</b> Схема простая: один ОУ-повторитель на электрод. Человек на форуме OpenBCI уже собрал такие для платы Cyton с тем же питанием ±2,5 В, дешевле 5 $ за штуку. Под вашу плату выйдет примерно 6–10 тыс. ₽ на 9 электродов и 2–3 выходных работы.</li>
+    <li><b>Лучше пассивных сухих заметно.</b> Активный электрод убирает наводку на провод и проблему с входным фильтром 2,2 кОм + 1 нФ. В работе 2024 года отношение сигнал/шум выросло примерно на 4,5 дБ, то есть в 1,7 раза по амплитуде.</li>
+    <li><b>Хуже мокрых всё равно.</b> Шум самого контакта кожа–металл и артефакты от смещения электрода буфер не лечит. Отставание от геля в тех же опытах около 3–4 дБ. Для альфа/тета-нейрофидбека этого хватает, для вызванных потенциалов (P300) понадобится больше усреднений.</li>
+    <li><b>Лучшее сочетание — активный электрод с полусухой губкой или каплей геля.</b> Почти качество мокрых при подготовке за пару минут и без пасты в волосах.</li>
+  </ul>
+  <div class="kpis">
+    <div class="kpi"><div class="v">≈0,8 мкВ</div><div class="l">шум канала, мокрые пассивные (оценка)</div></div>
+    <div class="kpi"><div class="v">≈3 мкВ</div><div class="l">активные сухие</div></div>
+    <div class="kpi"><div class="v">≈16 мкВ</div><div class="l">пассивные сухие, в основном 50 Гц</div></div>
+    <div class="kpi"><div class="v">10–50 мкВ</div><div class="l">сам альфа-ритм с закрытыми глазами</div></div>
+  </div>
+</section>
+
+<section aria-labelledby="h">
+  <div class="prose">
+    <h2 id="h">Что делает буфер на электроде</h2>
+    <p>У сухого контакта импеданс сотни килоом и больше. Пока сигнал идёт по проводу с таким сопротивлением источника, любой ток, наведённый на провод от проводки или от движения кабеля, превращается в напряжение: 1 нА наводки на 500 кОм дают 500 мкВ. Повторитель на ОУ стоит прямо над контактом, у него входной ток доли пикоампера, а выходное сопротивление единицы ом. Дальше по кабелю идёт уже низкоомный сигнал, и тот же 1 нА даёт нановольты.</p>
+    <p>Второй эффект важен именно для вашей платы. Входной фильтр с конденсатором 1 нФ на землю теперь видит не сотни килоом электрода, а выход ОУ. Разбаланс между каналами определяется только допуском деталей фильтра, поэтому совет брать резисторы 0,1% и конденсаторы C0G здесь работает в полную силу.</p>
+  </div>
+  <div class="scroll" role="img" aria-label="Схема активного электрода: электрод, резистор 47 кОм, повторитель на ОУ с охранным кольцом, резистор 220 Ом, четырёхжильный кабель к плате">
+    <svg viewBox="0 0 920 300" width="920" height="300">
+      <!-- electrode -->
+      <g class="w">
+        <path d="M30 130 v40 M42 130 v40 M54 130 v40 M66 130 v40 M24 130 h48"/>
+        <path d="M48 130 V110 H110"/>
+        <rect x="110" y="100" width="56" height="20" rx="2"/>
+        <path d="M166 110 H250"/>
+        <!-- opamp -->
+        <path d="M250 70 L250 170 L340 120 Z"/>
+        <path d="M250 145 H232 V60 H370 V120"/>
+        <path d="M340 120 H420"/>
+        <rect x="420" y="110" width="56" height="20" rx="2"/>
+        <path d="M476 120 H560"/>
+        <!-- rails -->
+        <path d="M295 95 V30 H560"/>
+        <path d="M295 145 V250 H560"/>
+        <path d="M330 30 V48 M320 48 H340 M320 54 H340 M330 54 V66"/>
+        <path d="M330 250 V232 M320 232 H340 M320 226 H340 M330 226 V214"/>
+        <!-- cable -->
+        <path d="M560 30 C620 30 620 110 660 110 H760"/>
+        <path d="M560 120 C600 120 620 130 660 130 H760"/>
+        <path d="M560 250 C620 250 620 150 660 150 H760"/>
+        <path d="M660 170 H760" stroke-dasharray="5 3"/>
+      </g>
+      <text x="262" y="108" style="font-size:14px">+</text>
+      <text x="262" y="150" style="font-size:14px">−</text>
+      <rect x="176" y="96" width="70" height="28" rx="4" fill="none" stroke="var(--accent)" stroke-dasharray="4 3"/>
+      <text x="176" y="90" style="fill:var(--accent)" class="m">охранное кольцо = выход</text>
+      <text x="14" y="190">сухой штырь</text>
+      <text x="14" y="206" class="m">или губка / гель</text>
+      <text x="112" y="140">R1 47 кОм</text>
+      <text x="112" y="156" class="m">защита входа</text>
+      <text x="262" y="196">ОУ 1:1</text>
+      <text x="262" y="212" class="m">OPA376 / AD8603</text>
+      <text x="422" y="150">R2 220 Ом</text>
+      <text x="422" y="166" class="m">развязка от ёмкости кабеля</text>
+      <text x="344" y="54" class="m">100 нФ</text>
+      <text x="344" y="232" class="m">100 нФ</text>
+      <text x="390" y="24" class="m">+2,5 В (AVDD)</text>
+      <text x="390" y="270" class="m">−2,5 В (AVSS)</text>
+      <rect x="640" y="96" width="24" height="86" rx="8" fill="none" stroke="var(--silver)"/>
+      <text x="600" y="200" class="m">кабель 4 жилы в экране, до 1 м</text>
+      <rect x="760" y="90" width="150" height="100" rx="4" fill="var(--accent-soft)" stroke="var(--accent)"/>
+      <text x="772" y="84" style="fill:var(--accent)">Low-Cost-EEG</text>
+      <text x="772" y="114">AVDD</text>
+      <text x="772" y="134">INxP (штырь)</text>
+      <text x="772" y="154">AVSS</text>
+      <text x="772" y="174">AGND, экран</text>
+      <text x="14" y="290" class="m">Опорный электрод собирается так же и идёт на SRB1. Электрод BIAS остаётся пассивным, на геле или наклейке за ухом.</text>
+    </svg>
+  </div>
+</section>
+
+<section aria-labelledby="n">
+  <div class="prose">
+    <h2 id="n">Шумовой бюджет канала</h2>
+    <p>Оценка шума одного канала (электрод минус опорный) в полосе 0,5–45 Гц. Шумы складываются по квадратам. Числа мои, по типичным значениям из литературы и даташитов, а не измерение на вашей плате. Порядок величин они показывают честно.</p>
+  </div>
+  <div class="scroll" role="img" aria-label="Оценка суммарного шума канала: мокрые пассивные 0,8 мкВ, активные полусухие 1,5, пассивные полусухие 2,2, активные сухие 3,0, пассивные сухие 16,3 мкВ">
+    <svg viewBox="0 0 900 260" width="900" height="260">
+      <rect x="610" y="20" width="280" height="196" fill="var(--accent-soft)"/>
+      <text x="618" y="36" style="fill:var(--accent)">зона альфа-ритма, от 10 мкВ</text>
+      <g stroke="var(--line)"><line x1="270" y1="20" x2="270" y2="216"/><line x1="440" y1="20" x2="440" y2="216"/><line x1="610" y1="20" x2="610" y2="216"/><line x1="780" y1="20" x2="780" y2="216"/></g>
+      <text x="10" y="58">Мокрые, пассивные</text><rect x="270" y="45" width="26.9" height="18" rx="2" fill="var(--good)"/><text x="304" y="58" class="m">0,8</text>
+      <text x="10" y="94">Полусухие, активные</text><rect x="270" y="81" width="50.7" height="18" rx="2" fill="var(--good)"/><text x="328" y="94" class="m">1,5</text>
+      <text x="10" y="130">Полусухие, пассивные</text><rect x="270" y="117" width="73.4" height="18" rx="2" fill="var(--warn)"/><text x="351" y="130" class="m">2,2</text>
+      <text x="10" y="166">Сухие, активные</text><rect x="270" y="153" width="101.3" height="18" rx="2" fill="var(--warn)"/><text x="379" y="166" class="m">3,0</text>
+      <text x="10" y="202">Сухие, пассивные</text><rect x="270" y="189" width="554.2" height="18" rx="2" fill="var(--bad)"/><text x="832" y="202" class="m">16,3</text>
+      <text x="270" y="238" text-anchor="middle" class="m">0</text><text x="440" y="238" text-anchor="middle" class="m">5</text>
+      <text x="610" y="238" text-anchor="middle" class="m">10</text><text x="780" y="238" text-anchor="middle" class="m">15 мкВ rms</text>
+    </svg>
+  </div>
+  <div class="scroll" style="margin-top:16px">
+    <table>
+      <thead><tr><th>Источник шума</th><th>Мокрые пассивные</th><th>Сухие активные</th><th>Сухие пассивные</th><th>Буфер помогает?</th></tr></thead>
+      <tbody>
+        <tr><td>Шум контакта кожа–электрод</td><td class="num">≈0,7 мкВ</td><td class="num">≈2,8 мкВ</td><td class="num">≈2,8 мкВ</td><td><span class="pill no">нет</span> зависит от материала и нажима</td></tr>
+        <tr><td>Тепловой шум импеданса</td><td class="num">0,1 мкВ (10 кОм)</td><td class="num">0,9 мкВ (500 кОм)</td><td class="num">0,9 мкВ</td><td><span class="pill no">нет</span> физика резистора</td></tr>
+        <tr><td>Сетевые 50 Гц через разбаланс фильтра</td><td class="num">0,3 мкВ</td><td class="num">≈0</td><td class="num">≈16 мкВ</td><td><span class="pill ok">да</span> главный выигрыш</td></tr>
+        <tr><td>Наводка и движение кабеля</td><td class="num">мало</td><td class="num">≈0</td><td class="num">десятки–сотни мкВ при движении</td><td><span class="pill ok">да</span></td></tr>
+        <tr><td>Смещение электрода по коже</td><td class="num">мало, гель держит</td><td class="num">большое</td><td class="num">большое</td><td><span class="pill no">нет</span> нужна хорошая шапка и прижим</td></tr>
+        <tr><td>ОУ буфера</td><td class="num">—</td><td class="num">0,2 мкВ</td><td class="num">—</td><td>добавляет немного</td></tr>
+        <tr><td>АЦП ADS1299</td><td class="num">0,14 мкВ (G=24)</td><td class="num">≈0,3 мкВ (G=8)</td><td class="num">≈0,3 мкВ</td><td>при сухих усиление приходится снижать</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note" style="margin-top:12px">Режекторный фильтр 50 Гц в программе снимает часть сетевой помехи у пассивных сухих, но гармоники 100/150 Гц и рывки от движения кабеля он не убирает.</p>
+</section>
+
+<section aria-labelledby="e">
+  <div class="prose">
+    <h2 id="e">Что показывают исследования</h2>
+  </div>
+  <div class="two">
+    <div class="box">
+      <h3>Активные «когтевые» сухие электроды, 2024</h3>
+      <p>Bioengineering (MDPI), прямое сравнение на одной установке. Отношение сигнал/шум при открытии и закрытии глаз: пассивные сухие 3,0 дБ, активные сухие 7,5 дБ, мокрые 10,6 дБ. Для SSVEP: 2,3, 5,8 и 10,1 дБ. Активные меньше всех ловили 50 Гц. Импеданс сухого электрода на волосах 122 кОм против 10 кОм у мокрого.</p>
+    </div>
+    <div class="box">
+      <h3>Mathewson и др., 2017</h3>
+      <p>Psychophysiology, «High and dry?». Пассивные мокрые, активные мокрые и активные сухие на Pz в задаче oddball. P3 и спектр видны у всех трёх. У активных сухих заметно выше шум отдельной пробы, то есть для того же результата нужно больше повторов. Активные мокрые почти не отличались от пассивных мокрых.</p>
+    </div>
+    <div class="box">
+      <h3>Laszlo и др., 2014</h3>
+      <p>J. Neurosci. Methods, активные и пассивные на одном усилителе. Пассивные дают самый чистый сигнал, но только при очень низком импедансе. Как только импеданс выше, лучше активные. При этом активные чуть хуже передавали быстрые изменения напряжения.</p>
+    </div>
+    <div class="box">
+      <h3>Kappenman и Luck, 2010</h3>
+      <p>Psychophysiology, система с активными электродами BioSemi. При высоком импедансе вырос низкочастотный шум кожных потенциалов, особенно в тёплом помещении. Это пример того, что буфер не спасает от процессов в самой коже.</p>
+    </div>
+    <div class="box">
+      <h3>ThinkPulse (Conscious Labs)</h3>
+      <p>Коммерческие активные сухие для плат OpenBCI на ADS1299. Усиление буфера 0 дБ, полимерные штырьки, потребление 5 мВт на электрод. Производитель велит ставить усиление каналов не выше 8 и отключать BIAS на Cyton. Комплект на 8 каналов стоил 500 $ и сейчас распродан.</p>
+    </div>
+    <div class="box">
+      <h3>Самодельные на OpenBCI и OpenEEG</h3>
+      <p>На форуме OpenBCI описаны активные электроды по схеме OpenEEG (Foltynski, доработка Hansmann): плата 19×19 мм, повторитель с усилением 1, медная заклёпка к сухому Ag/AgCl штырю, питание от AVDD/AVSS ±2,5 В платы Cyton, экранированный кабель. Меньше 5 $ за штуку.</p>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="d">
+  <div class="prose">
+    <h2 id="d">Как сделать под вашу плату</h2>
+    <p>У Low-Cost-EEG двуполярное аналоговое питание ±2,5 В, как у Cyton, поэтому самодельные схемы OpenBCI переносятся почти без изменений. Плату заказывать заново не нужно: сигнал идёт на те же штыри входов.</p>
+  </div>
+  <div class="two">
+    <div class="box">
+      <h3>Схема электрода</h3>
+      <ul>
+        <li>ОУ повторителем, CMOS с rail-to-rail входом и выходом, входной ток не больше 1 пА.</li>
+        <li>R1 10–47 кОм последовательно со входом: ограничивает ток при разряде статики. Его собственный шум около 0,2 мкВ, это меньше шума контакта.</li>
+        <li>Вокруг входной дорожки охранное кольцо, соединённое с выходом ОУ. Утечки по плате тогда не создают напряжения.</li>
+        <li>R2 100–330 Ом на выходе, чтобы ОУ не возбуждался на ёмкость кабеля.</li>
+        <li>По 100 нФ на каждую шину питания прямо у ОУ.</li>
+        <li>Плату отмыть от флюса спиртом и покрыть лаком: пот и флюс дают утечки, которые при гигаомном входе заметны.</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h3>Подключение к плате</h3>
+      <ul>
+        <li>Свободного разъёма с ±2,5 В на плате нет. Питание надо снять проводами с выводов AVDD/AVSS у конденсаторов возле ADS1299 и сделать маленькую плату-разветвитель на штыри входов.</li>
+        <li>Ток: OPA376 берёт 0,76 мА, на 9 штук около 7 мА с каждой шины. Надо сверить с запасом подкачки заряда на плате. AD8603 берёт 40 мкА, на 9 штук меньше 0,4 мА.</li>
+        <li>Опорный электрод тоже активный, выход на SRB1. Иначе каналы будут несимметричны.</li>
+        <li>BIAS оставить пассивным на геле или ЭКГ-наклейке за ухом. Если появится насыщение, попробовать без BIAS, как советует ThinkPulse.</li>
+        <li>Усиление каналов 8 (диапазон ±560 мВ) вместо 24 (±187 мВ). У сухих электродов постоянное смещение до сотен милливольт, на 24 каналы уходят в насыщение.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="scroll" style="margin-top:16px">
+    <table>
+      <thead><tr><th>ОУ</th><th>Входной ток</th><th>Шум 0,1–10 Гц</th><th>Потребление</th><th>Комментарий</th></tr></thead>
+      <tbody>
+        <tr><td>OPA376 / OPA2376 (TI)</td><td class="num">0,2 пА</td><td class="num">0,8 мкВ размах</td><td class="num">0,76 мА</td><td><span class="pill ok">основной выбор</span> самый тихий из доступных, до 5,5 В</td></tr>
+        <tr><td>AD8603 (ADI)</td><td class="num">0,2 пА</td><td class="num">2,3 мкВ размах</td><td class="num">40 мкА</td><td><span class="pill ok">если мало тока</span> шум выше, но всё ещё ниже шума сухого контакта</td></tr>
+        <tr><td>OPA333, ADA4528 (чопперы)</td><td class="num">пА, но с выбросами</td><td class="num">очень низкий</td><td class="num">17 мкА–1,5 мА</td><td><span class="pill no">не для сухих</span> импульсы входного тока на сотнях килоом превращаются в шум</td></tr>
+        <tr><td>MCP6001 и подобные дешёвые</td><td class="num">1 пА</td><td class="num">≈6 мкВ размах</td><td class="num">0,1 мА</td><td><span class="pill no">шумно</span> сравнимо с самим сигналом</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note" style="margin-top:12px">Параметры по даташитам, округлены. Наличие на Чип и Дип нужно проверить, на AliExpress OPA376 и AD8603 встречаются, но берите у продавцов с отзывами: перемаркировка ОУ там частая.</p>
+</section>
+
+<section aria-labelledby="w">
+  <h2 id="w">Чего лишаетесь</h2>
+  <div class="two">
+    <div class="box">
+      <h3>Контроль контакта ADS1299</h3>
+      <p>Встроенный lead-off детектор подаёт ток в вход и смотрит падение напряжения. С буфером он увидит выход ОУ, а не кожу, и всегда будет показывать «отлично». Контакт придётся оценивать в программе: по постоянному смещению канала, по уровню 50 Гц и по дрейфу. Это решаемо, но работу надо сделать.</p>
+    </div>
+    <div class="box">
+      <h3>Простота и вес</h3>
+      <p>Вместо одного провода на электрод теперь четыре, и на голове 9 маленьких плат. Шапка тяжелее, кабельный жгут толще. Нужна шапка или обруч, который прижимает электроды, иначе выигрыш съедят артефакты смещения.</p>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="c">
+  <h2 id="c">Сравнение вариантов</h2>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Критерий</th><th>Мокрые пассивные</th><th>Полусухие активные</th><th>Сухие активные</th><th>Сухие пассивные</th></tr></thead>
+      <tbody>
+        <tr><td>Качество сигнала</td><td><span class="pill ok">лучшее</span></td><td><span class="pill ok">почти как мокрые</span></td><td><span class="pill mid">на 3–4 дБ хуже мокрых</span></td><td><span class="pill no">плохо на этой плате</span></td></tr>
+        <tr><td>Подготовка</td><td class="num">10–20 мин</td><td class="num">2–5 мин</td><td class="num">1–2 мин</td><td class="num">1 мин</td></tr>
+        <tr><td>Мыть голову</td><td>да</td><td>нет</td><td>нет</td><td>нет</td></tr>
+        <tr><td>Устойчивость к движению</td><td>хорошая</td><td>средняя</td><td>слабая</td><td>плохая</td></tr>
+        <tr><td>Контроль контакта</td><td>встроенный</td><td>в программе</td><td>в программе</td><td>встроенный</td></tr>
+        <tr><td>Цена на 9 электродов</td><td class="num">3–5 тыс. ₽</td><td class="num">7–11 тыс. ₽</td><td class="num">6–10 тыс. ₽</td><td class="num">2–4 тыс. ₽</td></tr>
+        <tr><td>Сложность</td><td>купить</td><td>паять и разводить</td><td>паять и разводить</td><td>купить</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section aria-labelledby="m">
+  <div class="prose">
+    <h2 id="m">Сколько стоит самому</h2>
+  </div>
+  <div class="calc">
+    ОУ OPA376 или AD8603, 10 шт (с запасом)            ≈ 800–2 500 ₽<br>
+    Платы электродов Ø18 мм + плата-разветвитель       ≈ 2 000–5 000 ₽ (Резонит, не срочно)<br>
+    Сухие Ag/AgCl штырьки на кнопке, 9 шт              ≈ 1 500–3 500 ₽<br>
+    Ответные кнопки, резисторы, конденсаторы, лак      ≈ 300–500 ₽<br>
+    Кабель 4 жилы в экране, ~10 м                      ≈ 500–1 000 ₽<br>
+    ────────────────────────────────────────────────────────────────<br>
+    Итого                                              ≈ 6 000–10 000 ₽ и 2–3 выходных
+  </div>
+  <p class="note" style="margin-top:12px">Готовые варианты: ThinkPulse стоили 500 $ за 8 каналов и сейчас распроданы, в Россию их не возят. Olimex EEG-AE стоят 9 € за штуку и имеют открытые схемы, но сделаны под их плату EEG-SMT, а доставка в Россию сомнительна. Лабораторные g.SAHARA, actiCAP и BioSemi стоят тысячи евро.</p>
+</section>
+
+<section aria-labelledby="p">
+  <h2 id="p">Как я предлагаю идти</h2>
+  <ol class="plan">
+    <li><b>Сначала запустить плату на мокрых электродах.</b> Это эталон, без него не с чем сравнивать.</li>
+    <li><b>Собрать 2 прототипа:</b> один на канал, один на опорный. Корпус сделать так, чтобы в него вставлялся и сухой штырь, и губка.</li>
+    <li><b>Сравнить на одном месте.</b> Oz против уха, глаза закрыты и открыты по 30 секунд. Мерить отношение альфа-мощности закрыто/открыто для мокрого, активного сухого и активного с губкой.</li>
+    <li><b>Если активный с губкой даёт не хуже 70–80% от мокрого,</b> делать комплект на 9 электродов и программную оценку контакта.</li>
+  </ol>
+</section>
+
+<section aria-labelledby="s">
+  <h2 id="s">Источники</h2>
+  <ul class="src">
+    <li><a href="https://www.mdpi.com/2306-5354/11/3/276/html">Active Claw-Shaped Dry Electrodes for EEG Measurement in Hair Areas, Bioengineering 2024</a></li>
+    <li><a href="https://sapienlabs.org/eeg-signal-quality-in-wet-versus-dry-electrodes/">Sapien Labs: разбор Mathewson и др. 2017 и других сравнений</a></li>
+    <li><a href="https://researchconnect.buffalo.edu/en/publications/a-direct-comparison-of-active-and-passive-amplification-electrode/">Laszlo и др. 2014, сравнение активных и пассивных электродов</a></li>
+    <li><a href="https://erpinfo.org/s/Kappenman-2010-Psychophys-Impedance-p398.pdf">Kappenman и Luck 2010, импеданс и качество данных</a></li>
+    <li><a href="https://isn.ucsd.edu/pub/papers/rbme10.pdf">Chi, Jung, Cauwenberghs 2010, обзор сухих и бесконтактных электродов</a></li>
+    <li><a href="https://hdl.handle.net/11250/2733137">Impedance and Noise of Passive and Active Dry EEG Electrodes: A Review</a></li>
+    <li><a href="https://docs.openbci.com/ThirdParty/ThinkPulse/ThinkPulse/">ThinkPulse: документация и характеристики</a></li>
+    <li><a href="https://shop.openbci.com/products/thinkpulse-active-electrode-8-channel-starter-kit">ThinkPulse 8 каналов, магазин OpenBCI</a></li>
+    <li><a href="https://openbci.com/community/?p=6340">Самодельные активные электроды для Cyton, форум OpenBCI</a></li>
+    <li><a href="https://openeeg.sourceforge.net/doc/hw/ae.html">OpenEEG: схемы активных электродов</a></li>
+    <li><a href="https://www.olimex.com/Products/EEG/Electrodes/EEG-AE/">Olimex EEG-AE, открытые схемы</a></li>
+    <li><a href="https://www.ti.com/product/OPA376">TI OPA376: даташит</a></li>
+    <li><a href="https://www.ti.com/product/ADS1299">TI ADS1299: даташит, шум по усилениям, lead-off</a></li>
+  </ul>
+</section>
+
+</div>

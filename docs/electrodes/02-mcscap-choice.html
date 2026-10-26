@@ -1,0 +1,179 @@
+<title>Выбор электродов MCScap</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: лист техпаспорта, как у обзора электродов; вывод сверху, таблица моделей в своём скролле */
+:root{
+  --bg:#f3f5f4; --paper:#ffffff; --fg:#17201d; --muted:#5b6a65; --line:#d5ddda;
+  --accent:#0d7a64; --accent-soft:#dcefe9; --silver:#8a979a;
+  --good:#2f7d32; --warn:#a86a00; --bad:#b3362c;
+  --f-display:"Unbounded","Golos Text",system-ui,sans-serif;
+  --f-body:"Golos Text",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"Consolas",monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1513; --paper:#161e1b; --fg:#e4ebe8; --muted:#94a39e; --line:#2a3632;
+  --accent:#4cc3a5; --accent-soft:#183a31; --silver:#7f8d90;
+  --good:#6cc070; --warn:#e0a640; --bad:#ef7a6f; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1513; --paper:#161e1b; --fg:#e4ebe8; --muted:#94a39e; --line:#2a3632;
+  --accent:#4cc3a5; --accent-soft:#183a31; --silver:#7f8d90;
+  --good:#6cc070; --warn:#e0a640; --bad:#ef7a6f; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:16px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:32px 64px}
+.wrap{max-width:1040px;margin:0 auto;display:grid;gap:44px}
+.prose{max-width:68ch}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;line-height:1.2;margin:0}
+h1{font-size:clamp(28px,5vw,40px);font-weight:700;letter-spacing:-.01em}
+h2{font-size:clamp(20px,3vw,26px);font-weight:500;margin-bottom:16px}
+h3{font-size:17px;font-weight:500;margin-bottom:6px}
+p{margin:0 0 12px}
+a{color:var(--accent)}
+a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+header{display:grid;gap:14px}
+header .lead{font-size:18px;color:var(--muted);max-width:64ch;margin:0}
+.picks{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.pick{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:18px;display:grid;gap:6px;align-content:start;min-width:0}
+.pick.main{border:2px solid var(--accent)}
+.pick .tag{font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.pick .name{font-family:var(--f-display);font-size:22px;font-weight:500}
+.pick .price{font-family:var(--f-mono);font-size:14px;color:var(--muted)}
+.pick p{margin:0;font-size:15px}
+.scroll{overflow-x:auto;background:var(--paper);border:1px solid var(--line);border-radius:6px}
+table{border-collapse:collapse;width:100%;min-width:900px;font-size:14px}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+th{font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;background:var(--bg)}
+td:first-child{font-weight:600;white-space:nowrap}
+.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.pill{display:inline-block;font-family:var(--f-mono);font-size:11px;padding:2px 8px;border-radius:99px;border:1px solid currentColor;white-space:nowrap}
+.ok{color:var(--good)} .mid{color:var(--warn)} .no{color:var(--bad)}
+tr.best td{background:var(--accent-soft)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}
+.two > div{min-width:0}
+.box{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:18px}
+.box ul{margin:6px 0 0;padding-left:18px}
+.box li{margin-bottom:6px}
+.calc{background:var(--accent-soft);border-radius:6px;padding:18px 20px;font-family:var(--f-mono);font-size:14px;line-height:1.7;overflow-x:auto;white-space:nowrap}
+.note{font-size:14px;color:var(--muted)}
+ul.src{padding-left:18px;font-size:14px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">BrainAI · Low-Cost-EEG · электроды MCS (Медицинские компьютерные системы) · 25.10.2026</div>
+  <h1>Какие MCScap брать</h1>
+  <p class="lead">Сравнение восьми моделей из каталога по паспортным данным производителя: материал, площадь датчика, глубина под гель, совместимость со шлемами. Задача: нейрофидбек сидя, 30–60 минут, плата на ADS1299 с пассивными входами.</p>
+</header>
+
+<section aria-labelledby="v">
+  <h2 id="v">Вывод</h2>
+  <div class="picks">
+    <div class="pick main">
+      <div class="tag">Лучший выбор с текстильным шлемом</div>
+      <div class="name">MCScap-NTC</div>
+      <div class="price">1 200 ₽ · спечённый Ag/AgCl</div>
+      <p>Самый большой датчик (26 мм²), глубокая чашка 3,2 мм держит много геля, юбка не даёт ему вытечь. Сигнал стабилен весь сеанс. Именно эти электроды стоят в шлеме PROFESSIONAL для научной ЭЭГ.</p>
+    </div>
+    <div class="pick">
+      <div class="tag">Без шлема, на пасте</div>
+      <div class="name">MCScap-NT</div>
+      <div class="price">1 200 ₽ · спечённый Ag/AgCl</div>
+      <p>Тот же датчик 26 мм², но чашка мелкая (1,1 мм) и компактная. Производитель прямо пишет, что она подходит под пасту: можно приклеить пастой Ten20 к голове без шлема.</p>
+    </div>
+    <div class="pick">
+      <div class="tag">Если нужно дешевле</div>
+      <div class="name">MCScap-TC</div>
+      <div class="price">750 ₽ · напылённый Ag/AgCl</div>
+      <p>Корпус и размеры как у NT, но покрытие напылённое, а не спечённое. На старте сигнал почти такой же, но покрытие стирается при чистке, служит меньше и сильнее дрейфует со временем.</p>
+    </div>
+  </div>
+  <p class="note" style="margin-top:14px">Раньше я называл MCScap-T. Если сравнить характеристики, она уступает NT и NTC: датчик в 3,7 раза меньше (7 мм² против 26 мм²), а сделана она для сна и ТМС-ЭЭГ, где важна плоская форма лёжа. Сидя это преимущество не нужно.</p>
+</section>
+
+<section aria-labelledby="t">
+  <h2 id="t">Все восемь моделей</h2>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Модель</th><th>Цена</th><th>Покрытие</th><th>Форма</th><th>Площадь датчика</th><th>Глубина под гель</th><th>Ø снаружи</th><th>Крепление</th><th>Для нас</th></tr></thead>
+      <tbody>
+        <tr class="best"><td>MCScap-NTC</td><td class="num">1 200</td><td>спечённый</td><td>чашка с юбкой</td><td class="num">26 мм²</td><td class="num">3,2 мм</td><td class="num">15 мм</td><td>в отверстия текстильного шлема</td><td><span class="pill ok">лучший</span></td></tr>
+        <tr class="best"><td>MCScap-NT</td><td class="num">1 200</td><td>спечённый</td><td>чашка</td><td class="num">26 мм²</td><td class="num">1,1 мм</td><td class="num">11,9 мм</td><td>шлем или паста</td><td><span class="pill ok">лучший без шлема</span></td></tr>
+        <tr><td>MCScap-NTH</td><td class="num">1 200</td><td>спечённый</td><td>высокая чашка</td><td class="num">26 мм²</td><td class="num">3,7 мм</td><td class="num">11,4 мм</td><td>в отверстия шлема</td><td><span class="pill ok">для густых волос</span></td></tr>
+        <tr><td>MCScap-T</td><td class="num">950</td><td>спечённый</td><td>тонкая чашка</td><td class="num">7 мм²</td><td class="num">1,6 мм</td><td class="num">11,5 мм</td><td>в отверстия шлема, паста</td><td><span class="pill mid">для сна</span></td></tr>
+        <tr><td>MCScap-E</td><td class="num">950</td><td>спечённый</td><td>точечный</td><td class="num">4 мм²</td><td class="num">0,7 мм</td><td class="num">15,8 мм</td><td>только шлем с кольцами</td><td><span class="pill no">не нужен</span></td></tr>
+        <tr><td>MCScap-C</td><td class="num">750</td><td>напылённый</td><td>чашка с юбкой</td><td class="num">26 мм²</td><td class="num">3,5 мм</td><td class="num">15 мм</td><td>в отверстия шлема</td><td><span class="pill mid">дешёвый NTC</span></td></tr>
+        <tr><td>MCScap-TC</td><td class="num">750</td><td>напылённый</td><td>чашка</td><td class="num">26 мм²</td><td class="num">1,1 мм</td><td class="num">11,9 мм</td><td>шлем или паста</td><td><span class="pill mid">дешёвый NT</span></td></tr>
+        <tr><td>MCScap-StTC</td><td class="num">750</td><td>напылённый</td><td>чашка</td><td class="num">26 мм²</td><td class="num">1,1 мм</td><td class="num">11,9 мм</td><td>шлем из силиконовых трубок, провод 1 м</td><td><span class="pill mid">только с трубчатым шлемом</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note" style="margin-top:12px">У всех моделей одинаково: импеданс не больше 5 кОм, поляризация не больше 50 мВ, отверстие для геля 2,8 мм, разъём TouchProof 1,5 мм (DIN 42802), провод 1,2 м. Шум и дрейф производитель цифрами не указывает.</p>
+</section>
+
+<section aria-labelledby="w">
+  <h2 id="w">Почему именно так</h2>
+  <div class="two">
+    <div class="box">
+      <h3>Спечённый или напылённый</h3>
+      <p>Спечённый Ag/AgCl — это таблетка, хлорид серебра в ней по всей толщине. Напылённый — тонкий слой на подложке. Спечённые стабильнее по постоянному смещению и служат дольше. MCS даёт на шлемы со спечёнными электродами гарантию 300 циклов, а с напылёнными 150. Для нейрофидбека, где сеансы идут часто и долго, спечённые окупаются.</p>
+    </div>
+    <div class="box">
+      <h3>Площадь датчика</h3>
+      <p>Шум контакта и импеданс падают с ростом площади металла под гелем. У NT, NTC, NTH, C и TC датчик 26 мм², у T 7 мм², у E 4 мм². Для слабого альфа- и тета-ритма лишний запас по шуму полезен.</p>
+    </div>
+    <div class="box">
+      <h3>Глубина чашки</h3>
+      <p>Чем глубже чашка, тем больше в ней геля и тем дольше он не высыхает. Кроме того, электрод меньше реагирует на шевеление: между металлом и кожей остаётся гелевая подушка. Для сеанса в час сидя глубокая NTC удобнее мелкой NT. Мелкие чашки лучше работают с густой пастой.</p>
+    </div>
+    <div class="box">
+      <h3>С вашей платой</h3>
+      <p>Любой из этих электродов на геле подходит: 5 кОм через фильтр 2,2 кОм + 1 нФ дают меньше 0,2 мкВ сетевой помехи. Поляризация до 50 мВ спокойно помещается в диапазон ±187 мВ при усилении 24. Встроенный контроль контакта ADS1299 работает как обычно.</p>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="k">
+  <h2 id="k">Комплект на 8 каналов</h2>
+  <div class="calc">
+    Вариант А, с текстильным шлемом<br>
+    8 × MCScap-NTC (каналы)                    9 600 ₽<br>
+    1 × MCScap-NTC (опорный)                   1 200 ₽<br>
+    BIAS: ЭКГ-наклейка Ag/AgCl за ухом            ≈ 20 ₽<br>
+    Текстильный шлем MCScap 10-10 с отверстиями    цену уточнить у MCS<br>
+    Гель для ЭЭГ, шприц с тупой иглой          ≈ 500–800 ₽<br>
+    ─────────────────────────────────────────────────────<br>
+    ≈ 11 500 ₽ + шлем<br><br>
+    Вариант Б, без шлема, на пасте<br>
+    9 × MCScap-NT                             10 800 ₽<br>
+    Паста Ten20 + абразивный гель            ≈ 2 000–3 000 ₽<br>
+    ─────────────────────────────────────────────────────<br>
+    ≈ 13 000 ₽<br><br>
+    Вариант В, экономный<br>
+    9 × MCScap-TC (или C со шлемом)            6 750 ₽ + гель или паста
+  </div>
+  <p class="note" style="margin-top:12px">Опорный электрод лучше брать той же модели, что и каналы, чтобы смещения были одинаковые. BIAS не измеряется, ему хватит одноразовой наклейки.</p>
+</section>
+
+<section aria-labelledby="c">
+  <h2 id="c">Разъём: что докупить</h2>
+  <div class="prose">
+    <p>У всех MCScap штекер TouchProof 1,5 мм, а на плате штыри 2,54 мм. Нужен переходник на 10 гнёзд: панельные гнёзда TouchProof 1,5 мм (AliExpress «touch proof socket 1.5mm», «DIN 42802 female») на маленькой плате или в коробке, от них короткие провода на гребёнку 2,54 мм входов. Срезать штекеры не советую: так пропадает гарантия, а электроды потом не подключить к обычному медицинскому усилителю.</p>
+  </div>
+</section>
+
+<section aria-labelledby="s">
+  <h2 id="s">Источники</h2>
+  <ul class="src">
+    <li><a href="https://mks.ru/en/products/eeg-electrodes">МКС: электроды ЭЭГ MCScap, таблица характеристик</a></li>
+    <li><a href="https://mks.ru/brochures/download/brochure-66cdcc43c701b">МКС: буклет электродов MCScap</a></li>
+    <li><a href="https://mks.ru/en/faq/mcscap">МКС: вопросы и ответы по MCScap, уход и назначение моделей</a></li>
+    <li><a href="https://mks.ru/en/products/mcscap">МКС: шлемы MCScap и какие электроды в них стоят</a></li>
+    <li><a href="https://mks.ru/en/products/textile-caps">МКС: текстильные шлемы</a></li>
+  </ul>
+</section>
+
+</div>

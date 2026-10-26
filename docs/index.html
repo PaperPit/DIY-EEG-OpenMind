@@ -1,0 +1,84 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Народное ЭЭГ · начните здесь</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Unbounded:wght@500;600&display=swap"><style>
+:root{--bg:#eef0eb;--panel:#fbfcf9;--ink:#1c231f;--muted:#5a6660;--line:#d2d8cf;--accent:#b8611a;--accent-soft:#f4e3d2;--warn:#a2301f;--warn-soft:#f7e1dc;--ok:#2f7a4a;
+--f-display:"Unbounded","Golos Text",system-ui,sans-serif;--f-body:"Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace}
+@media (prefers-color-scheme: dark){:root{--bg:#101412;--panel:#191f1c;--ink:#e4e9e5;--muted:#97a39c;--line:#2a332e;--accent:#e58a42;--accent-soft:#3a2818;--warn:#f08a74;--warn-soft:#3a1d18;--ok:#6cc78f;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 var(--f-body)}
+.wrap{max-width:980px;margin:0 auto;padding:32px max(16px,env(safe-area-inset-left)) 64px}
+h1{font:600 30px/1.2 var(--f-display);margin:0 0 8px;text-wrap:balance;letter-spacing:-.01em}
+h2{font:600 18px/1.3 var(--f-display);margin:40px 0 14px}
+.lead{color:var(--muted);max-width:65ch;margin:0}
+.kicker{font:600 12px/1 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+.route{display:grid;gap:12px}
+.stage{display:grid;grid-template-columns:56px minmax(0,1fr);gap:14px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
+.stage .n{font:600 26px/1 var(--f-mono);color:var(--accent)}
+.stage h3{margin:0 0 4px;font:600 17px/1.3 var(--f-body)}
+.stage p{margin:4px 0;color:var(--ink);max-width:70ch}
+.stage .meta{font:500 13px/1.4 var(--f-mono);color:var(--muted)}
+a{color:var(--accent);font-weight:600}
+.btn{display:inline-block;margin-top:8px;padding:9px 14px;border-radius:9px;background:var(--accent);color:#fff;text-decoration:none;font-weight:600}
+.files{width:100%;border-collapse:collapse;font-size:14px}
+.files td,.files th{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.files th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.files td:first-child{font-family:var(--f-mono);white-space:nowrap}
+.tw{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:14px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.card ul{margin:6px 0 0;padding-left:20px}
+.warn{background:var(--warn-soft);border-left:3px solid var(--warn);border-radius:10px;padding:12px 14px}
+.warn b{color:var(--warn)}
+.mono{font-family:var(--f-mono);font-size:.92em}
+</style></head><body><div class="wrap">
+<div class="kicker">Народное ЭЭГ · на основе Low-Cost-EEG · ADS1299 + ESP32-S3</div>
+<h1>Сборка схемы и первичное тестирование</h1>
+<p class="lead">Всё, что нужно, чтобы спаять плату ЭЭГ пастой на нагревательном столике, убедиться, что она собрана правильно, и собрать её в корпус с панелью для электродов. Идите по маршруту сверху вниз: каждый следующий этап опирается на предыдущий.</p>
+
+<h2>Маршрут</h2>
+<div class="route">
+ <div class="stage"><div class="n">1</div><div><h3>Прочитать и подготовиться</h3>
+  <p>Пролистайте все три 3D-инструкции целиком, не паяя. Сверьте детали со списками покупок (плата и панель), разложите их по подписанным ячейкам. Распечатайте чек-лист.</p>
+  <p class="meta">≈ 1 час · <a href="03-checklist.html">чек-лист</a> · <a href="../hardware/shopping-list.csv">список покупок</a> · <a href="../hardware/bom.csv">перечень элементов</a></p></div></div>
+ <div class="stage"><div class="n">2</div><div><h3>Собрать плату</h3>
+  <p>16 шагов: паста через трафарет, расстановка деталей по группам, оплавление на столике, осмотр, нижняя сторона, выводные детали, отмывка.</p>
+  <p class="meta">≈ 4–6 часов, расстановку верхней стороны сделайте за один подход</p>
+  <a class="btn" href="01-assembly-3d.html">Открыть часть 1: сборка</a></div></div>
+ <div class="stage"><div class="n">3</div><div><h3>Проверить без питания и включить</h3>
+  <p>Осмотр под лупой, прозвонка шин питания, первое включение с ограничением тока, шесть напряжений на контрольных точках. Шаги 1–5 части 2.</p>
+  <p class="meta">≈ 30 минут</p>
+  <a class="btn" href="02-tests-3d.html">Открыть часть 2: проверка</a></div></div>
+ <div class="stage"><div class="n">4</div><div><h3>Прошить самотест</h3>
+  <p>Самотест проверяет ADS1299 изнутри: подлинность чипа, связь, питание, 8 каналов, шум и путь сигнала через каждый вход. Шаги 6–11 части 2.</p>
+  <p class="meta">≈ 1 час, нужен PlatformIO · <a href="../firmware/selftest/src/main.cpp">selftest_main.cpp</a> · <a href="../firmware/selftest/README.md">как прошить</a></p></div></div>
+ <div class="stage"><div class="n">5</div><div><h3>Корпус, панель электродов и питание</h3>
+  <p>13 шагов: корпус из оргстекла 3 мм (раскрой для лазера или вручную), стенка с 10 гнёздами TouchProof EE-B05, распайка на штырьки J3 без перекрещивания проводов, аккумулятор через TP4056 и тумблер, прозвонка, зарядка и первое включение от батареи.</p>
+  <p class="meta">≈ 3–4 часа, после успешного самотеста · <a href="../enclosure/panel-drill-template-1to1.pdf">шаблон сверловки</a> · <a href="../enclosure/case-drawings-1to1.pdf">чертежи корпуса</a> · <a href="../enclosure/case-acrylic-3mm-cut.dxf">DXF для лазера</a> · <a href="../enclosure/shopping-list-panel.csv">список покупок</a></p>
+  <a class="btn" href="04-panel-enclosure-3d.html">Открыть часть 3: панель и корпус</a></div></div>
+ <div class="stage"><div class="n">6</div><div><h3>Рабочая прошивка, батарея, живой сигнал</h3>
+  <p>Прошивка автора, Bluetooth, работа от аккумулятора и проверка альфа-ритма с электродами через панель. Шаги 12–14 части 2.</p>
+  <p class="meta">≈ 1 час · <a href="../hardware/upstream/author-guide-en.pdf">инструкция автора</a></p></div></div>
+</div>
+
+<h2>Перед началом</h2>
+<div class="grid2">
+ <div class="card"><b>Инструменты</b><ul><li>Нагревательный столик до 250 °C</li><li>Паста Sn63/Pb37, трафареты TOP и BOTTOM 0,12 мм</li><li>Флюс RMA-223, пинцет, лупа, оплётка</li><li>Паяльник с тонким жалом, фен</li><li>Мультиметр, изопропиловый спирт, щётка</li><li>Лабораторный блок питания (желательно)</li></ul></div>
+ <div class="card"><b>Программы</b><ul><li>VS Code с расширением PlatformIO</li><li>Прошивка автора: github.com/XavierAsghar/Low-Cost-EEG</li><li>EEG_BLE_Receiver.exe из того же репозитория</li><li>BrainVision LSL Viewer</li></ul></div>
+</div>
+<p></p>
+<div class="warn"><b>Безопасность.</b> Электроды на голове подключайте только при питании от аккумулятора или через USB-изолятор ADuM. Это самодельный прибор для экспериментов, а не медицинское изделие.</div>
+
+<h2>Что в папке</h2>
+<div class="tw"><table class="files"><thead><tr><th>Файл</th><th>Зачем</th></tr></thead><tbody>
+<tr><td><a href="01-assembly-3d.html">01 Сборка платы (3D)</a></td><td>Интерактивная 3D-инструкция по сборке, 16 шагов. Крутите плату мышью, нажимайте на детали.</td></tr>
+<tr><td><a href="02-tests-3d.html">02 Проверка после сборки (3D)</a></td><td>14 проверок от прозвонки до альфа-ритма, с примерами правильного вывода и таблицами неисправностей.</td></tr>
+<tr><td><a href="04-panel-enclosure-3d.html">04 Панель электродов и корпус (3D)</a></td><td>13 шагов: корпус из оргстекла, гнёзда для электродов, проводка к J3, аккумулятор с TP4056, зарядка и включение.</td></tr>
+<tr><td><a href="03-checklist.html">03 Чек-лист для печати</a></td><td>Все шаги трёх частей на бумаге, чтобы отмечать ручкой у столика.</td></tr>
+<tr><td><a href="../firmware/selftest/">firmware/selftest/</a></td><td>Код самотеста и инструкция по прошивке.</td></tr>
+<tr><td><a href="../enclosure/">enclosure/</a></td><td>Раскрой корпуса DXF, чертежи деталей и шаблон сверловки стенки (печатать в масштабе 100 %), список покупок панели.</td></tr>
+<tr><td><a href="../hardware/">hardware/</a></td><td>Список покупок, перечень элементов, схема и разводка, инструкция автора.</td></tr>
+<tr><td><a href="../hardware/pcb/">hardware/pcb/</a></td><td>Gerber и трафареты, которые ушли в Резонит. Нужны только для повторного заказа.</td></tr>
+<tr><td><a href="electrodes/01-electrodes-review.html">electrodes/</a></td><td>Какие электроды выбрать: обзор, выбор MCScap, активные электроды.</td></tr>
+</tbody></table></div>
+<p class="lead" style="margin-top:16px">PDF-шаблоны печатайте в масштабе 100 % и проверяйте линейкой контрольный отрезок 50 мм. 3D-инструкции работают без интернета. Открывайте файлы в Chrome, Edge или Firefox двойным щелчком. Отметки «Шаг выполнен» сохраняются в браузере на этом компьютере.</p>
+<p class="lead" style="margin-top:8px">Плата: <a href="https://github.com/XavierAsghar/Low-Cost-EEG">Low-Cost-EEG</a>, автор Xavier Asghar, GPL v3. Инструкции, корпус, панель электродов и самотест этого репозитория распространяются на тех же условиях.</p>
+</div></body></html>
