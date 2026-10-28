@@ -97,6 +97,7 @@ flowchart LR
 | 4 | Прошить самотест ADS1299 | [firmware/selftest/](firmware/selftest/), шаги 6–11 части 2 | 1 ч |
 | 5 | Корпус из оргстекла, панель электродов, аккумулятор с TP4056 | [docs/04-panel-enclosure-3d.html](docs/04-panel-enclosure-3d.html) | 3–4 ч |
 | 6 | Прошивка ЭЭГ, Bluetooth, альфа-ритм: O1 и O2, REF на мочке, BIAS на лбу | [firmware/eeg/](firmware/eeg/), [просмотр](docs/viewer.html) | 1 ч |
+| 7 | По желанию: второй этаж с ADS1299, 16 каналов | [docs/05-16-channels.html](docs/05-16-channels.html), [firmware/eeg16/](firmware/eeg16/) | 1–2 дня |
 
 ### Как это выглядит по ходу сборки
 
@@ -128,7 +129,8 @@ docs/                     инструкции
   02-tests-3d.html          проверка после сборки, 3D
   03-checklist.html         чек-лист для печати, 3 листа A4
   04-panel-enclosure-3d.html  корпус, панель электродов, питание, 3D
-  viewer.html               просмотр 8 каналов в Chrome: Mac, Linux, Windows
+  05-16-channels.html       второй этаж: вторая плата, 16 каналов
+  viewer.html               просмотр 8 или 16 каналов в Chrome: Mac, Linux, Windows
   electrodes/               обзоры электродов
   img/                      рендеры прибора и миниатюры шагов
 hardware/
@@ -139,6 +141,7 @@ hardware/
 enclosure/                  раскрой корпуса DXF, чертежи 1:1, шаблон сверловки, покупки
 firmware/selftest/          готовый проект PlatformIO: самотест ADS1299, 16 МБ flash
 firmware/eeg/               рабочая прошивка: 250 Гц, Bluetooth, bias на К1 и К2
+firmware/eeg16/             прошивка на две платы, 16 каналов (board_a, board_b)
 ```
 
 ## Что нужно

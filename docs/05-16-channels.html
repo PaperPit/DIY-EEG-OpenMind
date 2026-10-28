@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>16 каналов ЭЭГ: второй этаж с ADS1299 · Народное ЭЭГ</title>
+<meta name="description" content="Как из двух плат Low-Cost-EEG (ADS1299 + ESP32-S3) собрать 16-канальное ЭЭГ: вторая плата сверху, связь через UART, прошивка и проверка. 16-channel DIY EEG.">
+<link rel="canonical" href="https://paperpit.github.io/DIY-EEG-OpenMind/docs/05-16-channels.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Народное ЭЭГ · DIY EEG">
+<meta property="og:title" content="16 каналов ЭЭГ: второй этаж с ADS1299 · Народное ЭЭГ">
+<meta property="og:description" content="Как из двух плат Low-Cost-EEG собрать 16-канальное ЭЭГ: вторая плата сверху, связь через UART, прошивка и проверка.">
+<meta property="og:url" content="https://paperpit.github.io/DIY-EEG-OpenMind/docs/05-16-channels.html">
+<meta property="og:image" content="https://paperpit.github.io/DIY-EEG-OpenMind/docs/img/social-preview.jpg">
+<meta property="og:locale" content="ru_RU">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+:root{--bg:#eef0eb;--panel:#fbfcf9;--ink:#1c231f;--muted:#5a6660;--line:#d2d8cf;--accent:#b8611a;--ok:#2f7a4a;--bad:#a2301f;--soft:#f3e6da;--a:#2f6f9e;--b:#b8611a}
+@media (prefers-color-scheme: dark){:root{--bg:#101412;--panel:#191f1c;--ink:#e4e9e5;--muted:#97a39c;--line:#2a332e;--accent:#e58a42;--ok:#6cc78f;--bad:#f08a74;--soft:#2b2119;--a:#6fb0e0;--b:#e58a42;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:900px;margin:0 auto;padding:24px 16px 64px}
+h1{font-size:30px;line-height:1.2;margin:0 0 8px}
+h2{font-size:21px;line-height:1.25;margin:34px 0 10px}
+h3{font-size:16px;margin:20px 0 6px}
+.lead{color:var(--muted);max-width:70ch;margin:0 0 16px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin:12px 0}
+.warn{border-left:3px solid var(--accent);background:var(--soft);padding:10px 14px;border-radius:0 10px 10px 0;margin:12px 0}
+.mono,code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13.5px}
+code{background:var(--panel);border:1px solid var(--line);border-radius:5px;padding:0 4px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:6px 10px 6px 0;vertical-align:top;text-align:left;border-bottom:1px solid var(--line)}
+th{font-weight:600;color:var(--muted)}
+.tw{overflow-x:auto}
+ol.steps{padding-left:22px} ol.steps li{margin:6px 0}
+.step{display:flex;gap:12px;align-items:baseline}
+.num{flex:0 0 auto;font:700 13px/1 ui-monospace,Menlo,monospace;background:var(--accent);color:#fff;border-radius:99px;padding:5px 9px}
+.check{list-style:none;padding:0} .check li{padding:3px 0 3px 26px;position:relative}
+.check li::before{content:"";position:absolute;left:0;top:7px;width:13px;height:13px;border:1.5px solid var(--ink);border-radius:3px}
+.tagA{color:var(--a);font-weight:700} .tagB{color:var(--b);font-weight:700}
+svg{width:100%;height:auto;display:block}
+svg text{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;fill:var(--ink)}
+.home{display:inline-block;background:var(--accent);color:#fff;text-decoration:none;font:600 13px/1 system-ui,sans-serif;padding:8px 12px;border-radius:999px}
+a{color:var(--accent)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:640px){.grid2{grid-template-columns:1fr} h1{font-size:25px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<p style="margin:0 0 12px"><a class="home" href="index.html">← Главное меню</a></p>
+<h1>Второй этаж: 16 каналов</h1>
+<p class="lead">Над основной платой ставится вторая такая же плата со своим ADS1299. Плата внизу (<span class="tagA">A</span>) остаётся главной и отдаёт по Bluetooth все 16 каналов. Плата сверху (<span class="tagB">B</span>) читает каналы 9–16 и передаёт их на A по трём проводам через разъём J5. Пайки к ножкам микросхем в основном варианте нет.</p>
+
+<div class="warn"><b>Сначала соберите и проверьте 8 каналов.</b> Плата A должна пройти все проверки из частей 1–3 и показать альфа-ритм. Только после этого добавляйте второй этаж: так любую ошибку легко найти.</div>
+
+<svg viewBox="0 0 860 330" role="img" aria-label="Вид сбоку: плата B на стойках над платой A, провода J5, питание и REF">
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs>
+  <!-- case floor -->
+  <rect x="40" y="300" width="560" height="6" style="fill:var(--line)"/>
+  <!-- standoffs -->
+  <g style="fill:var(--muted)">
+    <rect x="80" y="252" width="10" height="48"/><rect x="540" y="252" width="10" height="48"/>
+    <rect x="80" y="150" width="10" height="96"/><rect x="540" y="150" width="10" height="96"/>
+  </g>
+  <!-- board A -->
+  <rect x="60" y="246" width="510" height="8" rx="2" style="fill:var(--a)"/>
+  <rect x="140" y="232" width="40" height="14" style="fill:var(--ink)" opacity=".75"/><text x="160" y="226" text-anchor="middle" font-size="12">ADS1299</text>
+  <rect x="380" y="234" width="90" height="12" style="fill:var(--ink)" opacity=".55"/><text x="425" y="228" text-anchor="middle" font-size="12">ESP32</text>
+  <text x="610" y="256" font-size="15" font-weight="700" style="fill:var(--a);fill:var(--a)">A · К1–К8, BIAS, Bluetooth</text>
+  <!-- board B -->
+  <rect x="60" y="144" width="510" height="8" rx="2" style="fill:var(--b)"/>
+  <rect x="140" y="130" width="40" height="14" style="fill:var(--ink)" opacity=".75"/><text x="160" y="124" text-anchor="middle" font-size="12">ADS1299</text>
+  <rect x="380" y="132" width="90" height="12" style="fill:var(--ink)" opacity=".55"/><text x="425" y="126" text-anchor="middle" font-size="12">ESP32</text>
+  <text x="610" y="154" font-size="15" font-weight="700" style="fill:var(--b)">B · К9–К16, без Bluetooth</text>
+  <!-- J5 link -->
+  <g style="stroke:var(--ink)" stroke-width="2" fill="none">
+    <path d="M300 246 C 285 205, 285 195, 300 152"/>
+    <path d="M312 246 C 327 205, 327 195, 312 152"/>
+    <path d="M324 246 L 324 152" stroke-dasharray="4 3"/>
+  </g>
+  <text x="335" y="205" font-size="13">J5 ↔ J5: TX→RX, RX←TX, GND</text>
+  <!-- REF Y -->
+  <g style="stroke:var(--ok)" stroke-width="2" fill="none">
+    <path d="M10 200 L 40 200"/><path d="M40 200 L 70 152"/><path d="M40 200 L 70 246"/>
+  </g>
+  <text x="2" y="190" font-size="13" style="fill:var(--ok)">REF</text>
+  <!-- power -->
+  <g style="stroke:var(--bad)" stroke-width="2" fill="none"><path d="M595 30 L 595 250 L 570 250"/><path d="M595 148 L 570 148"/></g>
+  <text x="588" y="24" text-anchor="end" font-size="13" style="fill:var(--bad)">аккумулятор → тумблер → J1 обеих плат</text>
+  <text x="96" y="205" font-size="12" style="fill:var(--muted)">стойки M3</text>
+  <text x="96" y="285" font-size="12" style="fill:var(--muted)">как раньше</text>
+</svg>
+
+<h2>Почему так, а не «Daisy» как у OpenBCI</h2>
+<p>В OpenBCI второй ADS1299 передаёт данные через вход DAISY_IN первого. На нашей плате этот вывод (41) припаян к земле. Вывод тактовой частоты CLK (37) никуда не разведён, а шину SPI к разъёмам не вывели. Свободен только J5. Поэтому вторая плата получает свой ESP32 и шлёт готовые отсчёты на A по UART. Нужна вторая плата из заказа в Резоните и второй комплект деталей. Новую печатную плату заказывать не надо.</p>
+<p>Каждый ADS1299 работает от своего генератора. Частоты отличаются на доли процента, поэтому прошивка A берёт к каждому своему отсчёту самый свежий отсчёт B. Сдвиг между половинами шапки не больше одного отсчёта (4 мс). Для нейрофидбека, мощности ритмов и BCI этого хватает. Если нужна точная фаза между каналами 1–8 и 9–16 (когерентность, источники), сделайте шаг 9: один провод даёт общий такт.</p>
+
+<h2>Что понадобится</h2>
+<div class="tw"><table>
+<tr><th>Что</th><th>Сколько</th><th>Где</th><th>Заметка</th></tr>
+<tr><td>Вторая плата из заказа Резонит</td><td>1</td><td>уже есть</td><td>Плата <span class="tagB">B</span></td></tr>
+<tr><td>Детали на вторую плату</td><td>1 комплект</td><td><a href="../hardware/shopping-list.csv">список покупок</a></td><td>Если брали детали на одну плату. Дороже всего ADS1299 (AliExpress 3,3–5,3 тыс. ₽) и ESP32-S3-WROOM-1-N16R8 (Чип и Дип 0,7–1 тыс. ₽). SW1 на B не нужен, см. шаг 1</td></tr>
+<tr><td>Стойки M3 латунные «папа–мама» 12 мм</td><td>4</td><td>Ozon, AliExpress</td><td>Вкручиваются в стойки платы A сверху, на них ложится B</td></tr>
+<tr><td>Винты M3×6</td><td>4</td><td>Ozon</td><td>Крепят B сверху</td></tr>
+<tr><td>Гнёзда TouchProof EE-B05</td><td>8</td><td>AliExpress</td><td>Если осталось меньше 8 из прошлых лотов, нужен ещё лот на 8</td></tr>
+<tr><td>Электроды с разъёмом TouchProof 1,5 мм</td><td>8</td><td>как для первых восьми</td><td>Или шапка на 16+ позиций</td></tr>
+<tr><td>Провод МГТФ 0,12–0,2 мм² или Dupont F-F</td><td>≈ 1,5 м</td><td>Чип и Дип, Ozon</td><td>J5, питание, REF, 8 каналов</td></tr>
+<tr><td>Разъём PH-2.0 с проводами (2 pin)</td><td>1</td><td>AliExpress, Чип и Дип</td><td>Питание на J1 платы B</td></tr>
+<tr><td>Для шага 9: провод ПЭЛ/ПЭТВ 0,1 мм, флюс, лупа</td><td>по желанию</td><td>Чип и Дип</td><td>Общий такт для двух ADS1299</td></tr>
+</table></div>
+
+<h2>Шаги</h2>
+
+<h3><span class="num">1</span> Соберите плату B</h3>
+<p>Паяйте по тем же 3D-инструкциям <a href="01-assembly-3d.html">части 1</a>, что и A. Отличия:</p>
+<ul>
+<li><b>SW1 не ставьте.</b> Вместо него перемычка проводом между средним отверстием SW1 (VIN) и тем крайним, которое звонится на «+» разъёма J1 (VBAT). Тогда B включается тем же тумблером, что и A. SW1 выше всех деталей, без него этаж ниже.</li>
+<li><b>JP1 (BOUT-BIN) не замыкайте.</b> BIAS на голову подаёт только A.</li>
+<li><b>Гребёнки J3 не ставьте</b> ни на B, ни (если ещё не поздно) на A. Провода от гнёзд паяйте прямо в отверстия «1+» … «8+» и «REF». Штырьки с колодками Dupont занимают по высоте 15 мм, этаж в корпус не войдёт.</li>
+<li>J5 (GND-RX-TX) поставьте на обе платы, или паяйте провода прямо в его отверстия.</li>
+<li>USB-C (J2) на B поставьте: через него прошивается плата B.</li>
+<li>Подпишите плату маркером: <span class="tagB">B</span>.</li>
+</ul>
+
+<h3><span class="num">2</span> Проверьте B отдельно</h3>
+<p>Пройдите <a href="02-tests-3d.html">часть 2</a> с прошивкой самотеста, как для A. Питание B на время проверки дайте с аккумулятора на J1 (перемычка вместо SW1 уже стоит), USB-C подключите к компьютеру для монитора. Обязательно: ID = 0x3E, DRDY 250 Гц, тестовый сигнал и шум с замкнутыми входами в норме.</p>
+
+<h3><span class="num">3</span> Прошейте обе платы</h3>
+<p>Откройте папку <code>firmware/eeg16</code> в PlatformIO. В ней две конфигурации:</p>
+<ul>
+<li><code>board_a</code> заливается в A по её USB-C. Это замена прошивки <code>firmware/eeg</code>.</li>
+<li><code>board_b</code> заливается в B по её USB-C (B при этом на аккумуляторе).</li>
+</ul>
+<p>В PlatformIO внизу слева выберите окружение (env) и нажмите Upload. Шлите прошивки до установки этажа: потом USB-C платы B закрыт стенкой корпуса.</p>
+
+<h3><span class="num">4</span> Соедините J5 крест-накрест</h3>
+<p>Три провода по 6–8 см, скрутите их между собой. Надпись на плате у разъёма: <b>GND-RX-TX</b>.</p>
+<div class="tw"><table>
+<tr><th>Плата <span class="tagA">A</span>, J5</th><th></th><th>Плата <span class="tagB">B</span>, J5</th><th>Сигнал</th></tr>
+<tr><td>TX (GPIO43)</td><td>→</td><td>RX (GPIO44)</td><td>команды от A: проверка контакта, тест, старт</td></tr>
+<tr><td>RX (GPIO44)</td><td>←</td><td>TX (GPIO43)</td><td>отсчёты каналов 9–16, 921600 бод</td></tr>
+<tr><td>GND</td><td>—</td><td>GND</td><td>общая земля</td></tr>
+</table></div>
+<p>TX одной платы всегда идёт на RX другой. Если соединить TX с TX, ничего не сгорит, но данных не будет.</p>
+
+<h3><span class="num">5</span> Питание</h3>
+<p>Обе платы питаются от одного аккумулятора через тот же тумблер. Припаяйте второй разъём PH-2.0 параллельно первому: красный к выходу тумблера (OUT+ TP4056 после тумблера), чёрный к OUT−. Вставьте его в J1 платы B. Проверьте полярность по шагу «Аккумулятор» в <a href="04-panel-enclosure-3d.html">части 3</a>: квадратная площадка J1 это минус.</p>
+<p>Две платы берут примерно в полтора раза больше тока, аккумулятор сядет быстрее. Когда к A подключён USB для монитора, B всё равно питается от аккумулятора, это нормально: земли плат соединены через J5 и минус аккумулятора.</p>
+
+<h3><span class="num">6</span> REF, BIAS и каналы 9–16</h3>
+<div class="tw"><table>
+<tr><th>Гнездо на панели</th><th>Куда паять</th></tr>
+<tr><td>REF</td><td>отверстие «REF» на <span class="tagA">A</span> <b>и</b> «REF» на <span class="tagB">B</span>: один электрод, провод раздваивается</td></tr>
+<tr><td>BIAS</td><td>только «BIAS» на <span class="tagA">A</span>, как раньше. На B «BIAS» пустой</td></tr>
+<tr><td>К9 … К16</td><td>«1+» … «8+» на <span class="tagB">B</span> (К9 = 1+, К10 = 2+, … К16 = 8+)</td></tr>
+<tr><td>«1−» … «8−», «SRB2», «GND»</td><td>не используются, как и на A</td></tr>
+</table></div>
+<p>Цвета проводов К9–К16 повторяют К1–К8 (цветовой код резисторов). На каждый провод B наденьте кусочек термоусадки или малярного скотча с буквой B.</p>
+<p><b>Гнёзда.</b> В торцевой стенке места больше нет. Восемь новых гнёзд ставятся в длинную стенку E (137 × 38 мм) двумя рядами по четыре, с тем же шагом: 11 мм по горизонтали, 15 мм между рядами. Шаблон <a href="../enclosure/panel-drill-template-1to1.pdf">сверловки панели</a> подходит, если взять из него четыре столбца.</p>
+
+<h3><span class="num">7</span> Соберите этаж</h3>
+<ol class="steps">
+<li>Измерьте самую высокую деталь на A (обычно J1 или C34). Она должна быть ниже 12 мм хотя бы на 1,5 мм. Если выше, возьмите стойки 15 мм. Тогда этаж выйдет выше на 3 мм, проверьте зазор до крышки.</li>
+<li>Выкрутите 4 верхних винта платы A и вместо них вкрутите стойки «папа–мама» 12 мм.</li>
+<li>Положите B сверху той же стороной и в ту же сторону, что A: антенны ESP32 друг над другом, J3 у стенки с гнёздами. Закрепите винтами M3×6.</li>
+<li>Высота пакета: 12 + 1,6 + 12 + 1,6 + детали B ≈ 34 мм. Внутри корпуса 38 мм, крышка закрывается.</li>
+<li>По желанию прорежьте в стенке C второе окно USB-C над первым, на 13,6 мм выше. Тогда B можно перепрошивать без разборки.</li>
+</ol>
+
+<h3><span class="num">8</span> Проверка</h3>
+<p>Электродов на голове нет. Тумблер включён, к A подключён USB, в PlatformIO открыт монитор порта A (115200).</p>
+<ul class="check">
+<li>В мониторе A есть строки <code>Board A, 16 channels</code> и <code>Board B: data is coming</code>. Если пишет <code>NO DATA</code>, проверьте J5 крест-накрест и питание B.</li>
+<li>Раз в 10 секунд A пишет <code>B samples used … repeated …</code>. Первое число растёт примерно на 2500, второе маленькое (единицы–десятки), <code>bad frames</code> около нуля.</li>
+<li>Введите в мониторе <code>t</code> и Enter. Обе платы включают внутренний тестовый сигнал.</li>
+<li>Откройте <a href="viewer.html">просмотр сигнала</a> в Chrome и подключитесь. Строка состояния: «идёт поток, каналов 16». На всех 16 графиках одинаковые прямоугольные зубцы 2 раза в секунду. Канал без зубцов значит, что на этом входе ошибка пайки.</li>
+<li>Снова <code>t</code>: тестовый сигнал выключен.</li>
+<li>Без электродов все 16 каналов и REF показывают «обрыв». Нажмите SW3 на A: ток проверки контакта выключится на обеих платах.</li>
+<li>На голове: REF на мочке, BIAS на лбу, К1/К2 на O1/O2 и К15/К16 на P7/P8. С закрытыми глазами альфа 8–12 Гц видна на К1, К2 и слабее на К15, К16. Значит, вторая плата пишет мозг, а не помеху.</li>
+</ul>
+<p>Предлагаемая раскладка 10-20: на A ваши восемь отведений как раньше, на B <b>К9 Fp1, К10 Fp2, К11 F7, К12 F8, К13 T7, К14 T8, К15 P7, К16 P8</b>. Вместе с F3, F4, C3, Cz, C4, Pz, O1, O2 на плате A это покрывает всю голову.</p>
+
+<h3><span class="num">9</span> По желанию: общий такт</h3>
+<p>Делайте только после того, как шаг 8 прошёл. Нужны лупа, флюс и провод 0,1 мм в лаке.</p>
+<ol class="steps">
+<li><b>Найдите вывод 37 у ADS1299 на обеих платах.</b> Ключ (точка) у U4 слева сверху, выводы считаются против часовой стрелки: 1–16 левая сторона сверху вниз, 17–32 нижняя слева направо, 33–48 правая снизу вверх. Вывод 37 пятый снизу на правой стороне. Проверьте прозвонкой: соседний 36 (RESET) звонится на площадку R30, соседний 38 (START) идёт на ESP32. У самого вывода 37 дорожки нет.</li>
+<li>Залудите кончик провода, приложите к носику вывода 37 на A и коснитесь паяльником на полсекунды. Так же на B. Провод проведите вдоль стойки, длина не больше 5 см, закрепите каплей клея. Проверьте прозвонкой, что 37 не замкнулся на 36 и 38.</li>
+<li><b>На плате B снимите R29</b> (10 кОм у CLKSEL). Площадку R29, которая <b>не</b> звонится на TP4 (DVDD), соедините проводом с GND (TP1). Теперь B берёт такт снаружи.</li>
+<li>В <code>firmware/eeg16/platformio.ini</code> замените <code>-D SYNC_CLOCK=0</code> на <code>-D SYNC_CLOCK=1</code> и перепрошейте <b>обе</b> платы.</li>
+<li>Проверка: в мониторе A <code>Board B ready</code>, а <code>repeated</code> в отчёте почти не растёт. Если B пишет <code>no ADS1299 answer</code>, такт до B не доходит: проверьте провод 37 и CLKSEL на земле.</li>
+</ol>
+<p>После шага 9 плата B без A не работает: её ADS1299 молчит без внешнего такта. Чтобы вернуть B в самостоятельный режим, поставьте R29 обратно и уберите перемычку CLKSEL–GND.</p>
+
+<h2>Как устроена прошивка</h2>
+<div class="panel">
+<ul>
+<li><b>B</b> читает свой ADS1299 по DRDY и отправляет каждый отсчёт кадром 31 байт: <code>A5 5A</code>, счётчик, 27 байт данных (3 статуса + 8 каналов по 3 байта), контрольный XOR. 250 кадров в секунду идут на скорости 921600 бод, это меньше 10 % канала. Bluetooth на B выключен.</li>
+<li><b>A</b> читает свой ADS1299, ждёт до 3 мс свежий кадр от B и собирает отсчёт 55 байт: счётчик, 27 байт A, 27 байт B. По Bluetooth уходит по 3 отсчёта (165 байт) в уведомлении, так пакет помещается и на macOS.</li>
+<li>Команды A → B идут тремя байтами <code>C3 cmd ~cmd</code>: проверка контакта вкл/выкл (кнопка SW3 на A), тестовый сигнал (<code>t</code> в мониторе), старт для режима общего такта. Загрузочный текст ESP32 на тех же проводах отбрасывается.</li>
+<li>BIAS собирает только A (каналы 1 и 2, как в 8-канальной прошивке). У B выключен буфер BIAS, обе платы подключают REF к SRB1.</li>
+<li><a href="viewer.html">Просмотр сигнала</a> сам различает 8 и 16 каналов по размеру отсчёта (28 или 55 байт). Программа автора <code>EEG_BLE_Receiver.exe</code> 16 каналов не читает.</li>
+</ul>
+</div>
+
+<h2>Если что-то не так</h2>
+<div class="tw"><table>
+<tr><th>Признак</th><th>Что проверить</th></tr>
+<tr><td><code>Board B: NO DATA</code></td><td>Питание B (TP6 VIN около 3,7–4,2 В), J5 крест-накрест, GND между J5. Монитор B по его USB: должна быть строка <code>Sending samples to board A</code>.</td></tr>
+<tr><td>Много <code>bad frames</code></td><td>Провода J5 длиннее 15 см или не скручены, плохая пайка на J5.</td></tr>
+<tr><td>B пишет <code>ADS1299 ID … expected 0x3E</code></td><td>Как для A: пайка U4, питание AVDD/AVSS/DVDD на TP2–TP4, подлинность чипа.</td></tr>
+<tr><td>К9–К16 шумят сильнее, чем К1–К8</td><td>REF не доходит до B (прозвоните REF на панели до отверстия «REF» на B), нет общей земли через J5.</td></tr>
+<tr><td>Bluetooth стал хуже</td><td>Антенна B над антенной A может слегка расстроить её. Сдвиньте B на 1–2 мм назад или разверните провода J5 подальше от антенн.</td></tr>
+</table></div>
+
+<p class="lead" style="margin-top:28px">Прошивка проверена компилятором только на синтаксис, на живых двух платах ещё не запускалась. Если что-то работает не так, как здесь написано, напишите в <a href="https://github.com/PaperPit/DIY-EEG-OpenMind/issues">Issues</a>. Основа: Xavier Asghar, Low-Cost-EEG, GPL v3.</p>
+</div>
+</body>
+</html>

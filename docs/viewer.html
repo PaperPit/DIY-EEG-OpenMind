@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Просмотр сигнала ЭЭГ в браузере по Bluetooth · Народное ЭЭГ</title>
-<meta name="description" content="Онлайн-просмотр 8 каналов ЭЭГ с ADS1299 + ESP32-S3 через Web Bluetooth прямо в браузере: осциллограмма, спектр, альфа-ритм. Browser EEG viewer over BLE.">
+<meta name="description" content="Онлайн-просмотр 8 или 16 каналов ЭЭГ с ADS1299 + ESP32-S3 через Web Bluetooth прямо в браузере: осциллограмма, спектр, альфа-ритм. Browser EEG viewer over BLE.">
 <link rel="canonical" href="https://paperpit.github.io/DIY-EEG-OpenMind/docs/viewer.html">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="Народное ЭЭГ · DIY EEG">
 <meta property="og:title" content="Просмотр сигнала ЭЭГ в браузере по Bluetooth · Народное ЭЭГ">
-<meta property="og:description" content="Онлайн-просмотр 8 каналов ЭЭГ с ADS1299 + ESP32-S3 через Web Bluetooth прямо в браузере: осциллограмма, спектр, альфа-ритм. Browser EEG viewer over BLE.">
+<meta property="og:description" content="Онлайн-просмотр 8 или 16 каналов ЭЭГ с ADS1299 + ESP32-S3 через Web Bluetooth прямо в браузере: осциллограмма, спектр, альфа-ритм. Browser EEG viewer over BLE.">
 <meta property="og:url" content="https://paperpit.github.io/DIY-EEG-OpenMind/docs/viewer.html">
 <meta property="og:image" content="https://paperpit.github.io/DIY-EEG-OpenMind/docs/img/social-preview.jpg">
 <meta property="og:locale" content="ru_RU">
@@ -44,7 +44,7 @@ canvas{width:100%;height:88px;background:transparent;display:block}
 <div class="wrap">
 <p style="margin:0 0 12px"><a href="index.html" style="display:inline-block;background:var(--accent);color:#fff;text-decoration:none;font:600 13px/1 system-ui,sans-serif;padding:8px 12px;border-radius:999px">← Главное меню</a></p>
 <h1>Просмотр сигнала</h1>
-<p class="lead">Восемь каналов с платы, 250 отсчётов/с, полоса 1–40 Гц и режектор 50 Гц. Откройте эту страницу по адресу сайта в Chrome или Edge: с диска Bluetooth не разрешат. Safari к Bluetooth из браузера не подключается. Электроды на голове только при питании от аккумулятора. Для первой записи нужны мокрые Ag/AgCl: сухой пассивный контакт на этой схеме даёт помеху 50 Гц уровня альфы.</p>
+<p class="lead">Восемь каналов с платы, или шестнадцать, если стоит второй этаж (прошивка <span class="mono">firmware/eeg16</span>, инструкция <a href="05-16-channels.html">«16 каналов»</a>). Страница сама поймёт, сколько каналов пришло. 250 отсчётов/с, полоса 1–40 Гц и режектор 50 Гц. Откройте эту страницу по адресу сайта в Chrome или Edge: с диска Bluetooth не разрешат. Safari к Bluetooth из браузера не подключается. Электроды на голове только при питании от аккумулятора. Для первой записи нужны мокрые Ag/AgCl: сухой пассивный контакт на этой схеме даёт помеху 50 Гц уровня альфы.</p>
 <div class="panel">
 <table>
 <tr><td class="mono">К1</td><td>O1, затылок слева</td></tr>
@@ -73,23 +73,32 @@ canvas{width:100%;height:88px;background:transparent;display:block}
 <option value="5">К6</option>
 <option value="6">К7</option>
 <option value="7">К8</option>
+<option value="8" class="b16" hidden>К9</option>
+<option value="9" class="b16" hidden>К10</option>
+<option value="10" class="b16" hidden>К11</option>
+<option value="11" class="b16" hidden>К12</option>
+<option value="12" class="b16" hidden>К13</option>
+<option value="13" class="b16" hidden>К14</option>
+<option value="14" class="b16" hidden>К15</option>
+<option value="15" class="b16" hidden>К16</option>
 </select>
 </label>
 <span class="status" id="alpha">альфа —</span>
 </div>
 <canvas id="spectrum" width="1000" height="180"></canvas>
 </div>
-<p class="warn">Прошивка <span class="mono">firmware/eeg</span> шлёт по 112 байт. Программа автора EEG_BLE_Receiver.exe ждёт 224 байта и этот поток не показывает.</p>
+<p class="warn">Прошивка <span class="mono">firmware/eeg</span> шлёт по 112 байт, <span class="mono">firmware/eeg16</span> по 165 байт. Программа автора EEG_BLE_Receiver.exe ждёт 224 байта и этот поток не показывает.</p>
 </div>
 <script>
 const SERVICE = "91bad492-b950-4226-aa2b-4ede9fa42f59";
 const CHAR = "cba1d466-344c-4be3-ab3f-189f80dd7518";
 const SPS = 250;
 const UV = 4.5e6 / (24 * 8388608);
-const N = 8;
+const NMAX = 16;
+let N = 8;
 const VIEW = 1000;
 const FFTN = 512;
-const names = ["К1 · O1","К2 · O2","К3","К4","К5","К6","К7","К8"];
+const names = ["К1 · O1","К2 · O2","К3","К4","К5","К6","К7","К8","К9","К10","К11","К12","К13","К14","К15","К16"];
 
 const HP = [0.9823854385260917, -1.9647708770521835, 0.9823854385260917, -1.964460580205232, 0.965081173899135];
 const LP = [0.14532388387704243, 0.29064776775408485, 0.14532388387704243, -0.6710290907740962, 0.2523246262822659];
@@ -105,21 +114,23 @@ Biquad.prototype.step = function(x) {
   return y;
 };
 
-const rings = Array.from({length:N}, () => new Float32Array(VIEW));
-const fftBuf = Array.from({length:N}, () => new Float32Array(FFTN));
-const writeAt = new Array(N).fill(0);
-const filters = Array.from({length:N}, () => [new Biquad(HP), new Biquad(HP), new Biquad(LP), new Biquad(LP), new Biquad(NOTCH)]);
+const rings = Array.from({length:NMAX}, () => new Float32Array(VIEW));
+const fftBuf = Array.from({length:NMAX}, () => new Float32Array(FFTN));
+const writeAt = new Array(NMAX).fill(0);
+const filters = Array.from({length:NMAX}, () => [new Biquad(HP), new Biquad(HP), new Biquad(LP), new Biquad(LP), new Biquad(NOTCH)]);
 let expected = null;
 let dropped = 0;
 let got = 0;
 let loffP = 0;
 let loffRef = 0;
+let loffB = 0;
 
 const charts = document.getElementById("charts");
 const canvases = [];
-for (let i = 0; i < N; i++) {
+for (let i = 0; i < NMAX; i++) {
   const box = document.createElement("div");
   box.className = "ch";
+  if (i >= 8) box.hidden = true;
   const title = document.createElement("b");
   title.textContent = names[i];
   const canvas = document.createElement("canvas");
@@ -137,7 +148,14 @@ function filt(ch, x) {
   return y;
 }
 
-function pushSample(values, status) {
+function setChannels(n) {
+  if (n === N) return;
+  N = n;
+  document.querySelectorAll("#charts .ch").forEach((box, i) => { box.hidden = i >= N; });
+  document.querySelectorAll("#specCh .b16").forEach((o) => { o.hidden = N < 16; });
+}
+
+function pushSample(values, status, statusB) {
   for (let ch = 0; ch < N; ch++) {
     const y = filt(ch, values[ch]);
     rings[ch][writeAt[ch] % VIEW] = y;
@@ -147,15 +165,22 @@ function pushSample(values, status) {
   loffP = 0;
   for (let j = 0; j < 8; j++) if ((status >> (12 + j)) & 1) loffP |= 1 << j;
   loffRef = (status >> 4) & 1;
+  loffB = 0;
+  if (N === 16) for (let j = 0; j < 8; j++) if ((statusB >> (12 + j)) & 1) loffB |= 1 << j;
   got++;
 }
 
 function onPacket(buf) {
   const view = new DataView(buf);
-  if (view.byteLength % 28 !== 0) return;
-  const count = view.byteLength / 28;
+  // 28 bytes per sample: one board, 8 channels. 55 bytes: two boards, 16 channels (firmware/eeg16).
+  let size;
+  if (view.byteLength % 28 === 0) size = 28;
+  else if (view.byteLength % 55 === 0) size = 55;
+  else return;
+  setChannels(size === 55 ? 16 : 8);
+  const count = view.byteLength / size;
   for (let i = 0; i < count; i++) {
-    const o = i * 28;
+    const o = i * size;
     const counter = view.getUint8(o);
     if (expected !== null) {
       const miss = (counter - expected) & 255;
@@ -164,13 +189,15 @@ function onPacket(buf) {
     expected = (counter + 1) & 255;
     const values = new Array(N);
     for (let ch = 0; ch < N; ch++) {
-      const p = o + 4 + ch * 3;
+      // Board B: its 3 status bytes start at o + 28, channel data at o + 31.
+      const p = ch < 8 ? o + 4 + ch * 3 : o + 31 + (ch - 8) * 3;
       let raw = (view.getUint8(p) << 16) | (view.getUint8(p + 1) << 8) | view.getUint8(p + 2);
       if (raw & 0x800000) raw -= 0x1000000;
       values[ch] = raw * UV;
     }
     const status = (view.getUint8(o + 1) << 16) | (view.getUint8(o + 2) << 8) | view.getUint8(o + 3);
-    pushSample(values, status);
+    const statusB = size === 55 ? (view.getUint8(o + 28) << 16) | (view.getUint8(o + 29) << 8) | view.getUint8(o + 30) : 0;
+    pushSample(values, status, statusB);
   }
 }
 
@@ -268,11 +295,12 @@ function paint() {
   if (got) {
     const bits = [];
     for (let i = 0; i < 8; i++) bits.push("К" + (i + 1) + ((loffP >> i) & 1 ? " обрыв" : " ок"));
+    if (N === 16) for (let i = 0; i < 8; i++) bits.push("К" + (i + 9) + ((loffB >> i) & 1 ? " обрыв" : " ок"));
     bits.push("REF " + (loffRef ? "обрыв" : "ок"));
     document.getElementById("loff").textContent = bits.join(" · ");
   }
   document.getElementById("status").textContent =
-    (got ? "идёт поток" : "подключено, жду данные") + " · потеряно " + dropped;
+    (got ? "идёт поток, каналов " + N : "подключено, жду данные") + " · потеряно " + dropped;
   requestAnimationFrame(paint);
 }
 
