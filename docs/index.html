@@ -1,202 +1,598 @@
-<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Народное ЭЭГ · начните здесь</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Unbounded:wght@500;600&display=swap">
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Народное ЭЭГ · соберите свой ЭЭГ</title>
+<meta name="description" content="Восьмиканальный ЭЭГ на ADS1299 и ESP32-S3, который можно собрать дома. 43 шага с 3D-моделями прямо в браузере, открытые файлы платы, корпуса и прошивки.">
+<meta property="og:title" content="Народное ЭЭГ: соберите восьмиканальный ЭЭГ дома">
+<meta property="og:description" content="43 шага с 3D-моделями, открытые файлы платы, корпуса и прошивки.">
+<meta property="og:image" content="img/device.jpg">
+<meta name="theme-color" content="#131209">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23131209'/%3E%3Cpath d='M4 17h6l2-6 4 12 3-9 2 3h7' fill='none' stroke='%23e58a42' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
 <style>
-:root{--bg:#eef0eb;--panel:#fbfcf9;--ink:#1c231f;--muted:#5a6660;--line:#d2d8cf;--accent:#b8611a;--accent-soft:#f4e3d2;--warn:#a2301f;--warn-soft:#f7e1dc;--ok:#2f7a4a;--ok-soft:#dcefe2;
---f-display:"Unbounded","Golos Text",system-ui,sans-serif;--f-body:"Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace}
-@media (prefers-color-scheme: dark){:root{--bg:#101412;--panel:#191f1c;--ink:#e4e9e5;--muted:#97a39c;--line:#2a332e;--accent:#e58a42;--accent-soft:#3a2818;--warn:#f08a74;--warn-soft:#3a1d18;--ok:#6cc78f;--ok-soft:#173523;color-scheme:dark}}
+/* ---------- tokens ---------- */
+:root{
+ --bg:#f4f2ec;--surface:#ffffff;--surface-2:#ebe8df;--line:#dcd8cc;--ink:#17160f;--muted:#5f5c50;
+ --accent:#b8611a;--accent-ink:#ffffff;--accent-soft:#f4e3d2;--ok:#2f7a4a;--warn:#a2301f;--warn-soft:#f7e1dc;
+ --h1-from:#000000;--h1-to:#666666;--nav:rgba(255,255,255,.72);--scope:#17160f;--scope-grid:rgba(255,255,255,.06);
+ --f:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;--mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+ --ease:cubic-bezier(.22,1,.36,1);color-scheme:light
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+ --bg:#131209;--surface:#1f1f1f;--surface-2:#272727;--line:#313131;--ink:#edeae0;--muted:#a3a091;
+ --accent:#e58a42;--accent-ink:#131209;--accent-soft:#3a2818;--ok:#6cc78f;--warn:#f08a74;--warn-soft:#3a1d18;
+ --h1-from:#ffffff;--h1-to:#9b9b9b;--nav:rgba(31,31,31,.72);--scope:#000000;color-scheme:dark}}
+:root[data-theme="dark"]{
+ --bg:#131209;--surface:#1f1f1f;--surface-2:#272727;--line:#313131;--ink:#edeae0;--muted:#a3a091;
+ --accent:#e58a42;--accent-ink:#131209;--accent-soft:#3a2818;--ok:#6cc78f;--warn:#f08a74;--warn-soft:#3a1d18;
+ --h1-from:#ffffff;--h1-to:#9b9b9b;--nav:rgba(31,31,31,.72);--scope:#000000;color-scheme:dark}
+
+/* ---------- base ---------- */
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 var(--f-body)}
-.wrap{max-width:1080px;margin:0 auto;padding:28px 16px 72px}
-h1{font:600 32px/1.15 var(--f-display);margin:0 0 10px;text-wrap:balance;letter-spacing:-.01em}
-h2{font:600 20px/1.3 var(--f-display);margin:52px 0 6px}
-h2+.sub{color:var(--muted);margin:0 0 18px;max-width:70ch}
-.lead{color:var(--muted);max-width:62ch;margin:0}
-.kicker{font:600 12px/1 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
-a{color:var(--accent);font-weight:600}
+html{scroll-behavior:smooth;scroll-padding-top:96px}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/24px var(--f);-webkit-font-smoothing:antialiased}
 img{max-width:100%;display:block}
-.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border-radius:10px;background:var(--accent);color:#fff;text-decoration:none;font-weight:600;border:0;cursor:pointer;font:600 15px var(--f-body)}
-.btn.ghost{background:transparent;color:var(--accent);border:1.5px solid var(--accent)}
-.btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:16px}
-/* hero */
-.hero{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:28px;align-items:center}
-.hero .shot{border-radius:18px;overflow:hidden;border:1px solid var(--line);background:#dfe4dc;position:relative}
-.hero .shot img{width:100%;aspect-ratio:4/3;object-fit:cover}
-.hero .shot .tag{position:absolute;left:12px;bottom:12px;background:rgba(20,25,22,.82);color:#fff;font:500 12px/1.3 var(--f-mono);padding:6px 9px;border-radius:8px}
-.specs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:22px}
-.spec{padding:12px 12px 10px;border-radius:12px;background:var(--panel);border:1px solid var(--line)}
-.spec b{display:block;font:600 19px/1.1 var(--f-mono);color:var(--accent)}
-.spec span{font-size:13px;color:var(--muted)}
-@media (max-width:820px){.hero{grid-template-columns:1fr}.specs{grid-template-columns:repeat(2,minmax(0,1fr))}h1{font-size:26px}}
-/* result */
-.result{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
-.result figure{margin:0;overflow:hidden}
-.result img{aspect-ratio:4/3;object-fit:cover;width:100%;border-bottom:1px solid var(--line)}
-.result figcaption{padding:12px 14px 14px;font-size:14px;color:var(--muted)}
-.result figcaption b{display:block;color:var(--ink);font-size:15px;margin-bottom:2px}
-@media (max-width:820px){.result{grid-template-columns:1fr}}
-/* how to use */
-.how{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:22px;align-items:start}
-.how .pic{position:relative;border-radius:14px;overflow:hidden;border:1px solid var(--line)}
-.how .pic img{width:100%}
-.how .pic button{position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;border:2px solid #fff;background:var(--accent);color:#fff;font:600 14px var(--f-mono);cursor:pointer;opacity:0;padding:0}
-.how .pic button.on{opacity:1;box-shadow:0 0 0 6px rgba(184,97,26,.35)}
-.legend{list-style:none;margin:0;padding:0;display:grid;gap:6px}
-.legend li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;padding:9px 10px;border-radius:10px;cursor:pointer;border:1px solid transparent}
-.legend li:hover,.legend li.on{background:var(--panel);border-color:var(--line)}
-.legend .n{width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;font:600 13px/26px var(--f-mono);text-align:center}
-.legend p{margin:0;font-size:14.5px}
-.legend b{font-weight:600}
-.kbd{font:500 12px var(--f-mono);border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:1px 6px;background:var(--panel)}
-@media (max-width:820px){.how{grid-template-columns:1fr}}
-/* route */
-.prog{display:flex;align-items:center;gap:14px;margin:0 0 16px;padding:14px 16px}
-.bar{flex:1;height:10px;border-radius:6px;background:var(--line);overflow:hidden}
-.bar i{display:block;height:100%;width:0;background:var(--ok);transition:width .4s}
-.prog b{font:600 15px var(--f-mono);white-space:nowrap}
-.stage{margin-bottom:12px;overflow:hidden}
-.stage>summary{list-style:none;display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:14px;align-items:center;padding:16px;cursor:pointer}
+a{color:var(--accent)}
+p{text-wrap:pretty}
+h1,h2,h3{text-wrap:balance;margin:0}
+.wrap{max-width:1120px;margin:0 auto;padding:0 16px}
+.mono{font-family:var(--mono)}
+.label{font:500 12px/16px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.muted{color:var(--muted)}
+.skip{position:absolute;left:16px;top:-48px;background:var(--accent);color:var(--accent-ink);padding:8px 12px;border-radius:8px;z-index:30;font-weight:600;text-decoration:none}
+.skip:focus{top:16px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ---------- buttons ---------- */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:12px;font:600 16px/24px var(--f);text-decoration:none;border:1px solid transparent;cursor:pointer;transition:transform .3s var(--ease),background-color .3s var(--ease),border-color .3s var(--ease)}
+.btn:hover{transform:translateY(-2px)}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn.ghost:hover{border-color:var(--accent)}
+.btn.sm{padding:8px 12px;font-size:14px;line-height:20px;border-radius:8px}
+.btn svg{width:20px;height:20px;flex:none}
+
+/* ---------- nav ---------- */
+.nav{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:20;display:flex;align-items:center;gap:4px;padding:4px;border-radius:16px;background:var(--nav);border:1px solid var(--line);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);max-width:calc(100% - 24px)}
+.nav .logo{display:flex;align-items:center;gap:8px;padding:8px 12px;font:700 14px/20px var(--f);color:var(--ink);text-decoration:none;white-space:nowrap}
+.nav .logo svg{width:20px;height:20px}
+.nav .links{display:flex;gap:4px}
+.nav .links a,.tgl{padding:8px 12px;border-radius:12px;font:600 14px/20px var(--f);color:var(--muted);text-decoration:none;white-space:nowrap;transition:color .3s var(--ease),background-color .3s var(--ease)}
+.nav .links a:hover,.nav .links a.on,.tgl:hover{color:var(--ink);background:var(--surface-2)}
+.tgl{background:none;border:0;cursor:pointer;display:inline-flex;align-items:center;gap:4px}
+.tgl svg{width:20px;height:20px}
+.lang b{color:var(--ink)}
+.nav .btn{margin-left:4px;white-space:nowrap}
+@media (max-width:860px){.nav .links{display:none}}
+@media (max-width:520px){.nav .logo span{display:none}.nav .cta-txt{display:none}}
+
+/* ---------- reveal ---------- */
+.rv{opacity:0;transform:translateY(32px);transition:opacity .7s var(--ease),transform .7s var(--ease)}
+.rv.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.rv{transform:none;transition:opacity .3s}.btn:hover,.th:hover{transform:none}}
+
+/* ---------- sections ---------- */
+section{padding:96px 0 0}
+.head{max-width:680px;margin-bottom:40px}
+.head h2{font:700 30px/36px var(--f);letter-spacing:-.01em;margin-top:12px}
+.head p{margin:12px 0 0;color:var(--muted);font-size:18px;line-height:28px}
+@media (max-width:640px){section{padding-top:80px}.head h2{font-size:24px;line-height:32px}.head p{font-size:16px;line-height:24px}}
+
+/* ---------- hero ---------- */
+.hero{padding:144px 0 0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:48px;align-items:center}
+.hero h1{font:700 48px/1 var(--f);letter-spacing:-.025em;max-width:680px;margin-top:16px;background:linear-gradient(90deg,var(--h1-from),var(--h1-to));-webkit-background-clip:text;background-clip:text;color:transparent;padding-bottom:4px}
+.hero .sub{max-width:680px;margin:24px 0 0;font-size:18px;line-height:28px;color:var(--muted)}
+.hero .btns{display:flex;flex-wrap:wrap;gap:12px;margin-top:32px}
+.facts{display:flex;flex-wrap:wrap;gap:8px 24px;margin:32px 0 0;padding:0;list-style:none;font:500 14px/20px var(--mono);color:var(--muted)}
+.facts b{color:var(--ink);font-weight:600}
+.bench{position:relative;margin:0;border-radius:24px;border:1px solid var(--line);background:var(--surface);padding:8px}
+.bench a{display:block;border-radius:16px;overflow:hidden}
+.bench img{width:100%;height:auto;aspect-ratio:1018/674;object-fit:cover;transition:transform .5s var(--ease)}
+.bench a:hover img{transform:scale(1.02)}
+.bench figcaption{display:flex;justify-content:space-between;gap:12px;padding:12px 8px 4px;font:500 12px/16px var(--mono);color:var(--muted)}
+.bench figcaption a{display:inline;color:var(--accent);text-decoration:none;border-radius:4px}
+@media (max-width:900px){.hero{grid-template-columns:1fr;padding-top:112px;gap:40px}.hero h1{font-size:36px;line-height:40px}}
+
+/* ---------- what ---------- */
+.what{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:16px}
+.scope{background:var(--scope);border-radius:24px;padding:16px;color:#edeae0;display:flex;flex-direction:column;gap:12px;border:1px solid var(--line)}
+.scope .top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.scope .top span{font:500 12px/16px var(--mono);color:#a3a091}
+.scope canvas{width:100%;height:380px;display:block;border-radius:8px;background:#0b0a06}
+.scope .eyes{font:600 14px/20px var(--f);padding:8px 12px;border-radius:8px;border:1px solid #3a3a3a;background:#1f1f1f;color:#edeae0;cursor:pointer;display:inline-flex;gap:8px;align-items:center;transition:border-color .3s var(--ease),transform .3s var(--ease)}
+.scope .eyes:hover{border-color:#e58a42}
+.scope .eyes:active{transform:translateY(1px)}
+.scope .eyes svg{width:20px;height:20px}
+.scope .note{font:400 14px/20px var(--f);color:#a3a091;margin:0}
+.scope .note b{color:#e58a42;font-weight:600}
+.facts3{display:grid;gap:16px}
+.fact{background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:24px}
+.fact .ico{width:40px;height:40px;border-radius:12px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;margin-bottom:16px}
+.fact .ico svg{width:24px;height:24px}
+.fact h3{font:700 18px/28px var(--f)}
+.fact p{margin:4px 0 0;color:var(--muted);font-size:14px;line-height:20px}
+@media (max-width:900px){.what{grid-template-columns:1fr}.scope canvas{height:260px}}
+
+.parts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:16px}
+.part{background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:8px;text-decoration:none;color:inherit;transition:border-color .3s var(--ease),transform .5s var(--ease)}
+.part:hover{border-color:var(--accent);transform:translateY(-4px)}
+.part img{border-radius:16px;aspect-ratio:4/3;object-fit:cover;width:100%}
+.part div{padding:16px 12px 12px}
+.part h3{font:700 16px/24px var(--f)}
+.part p{margin:4px 0 0;color:var(--muted);font-size:14px;line-height:20px}
+@media (max-width:760px){.parts{grid-template-columns:1fr}}
+
+/* ---------- tagline ---------- */
+.tagline{padding:128px 0 32px}
+.tagline p{font:700 48px/1 var(--f);letter-spacing:-.02em;max-width:880px;margin:0}
+.tagline .w{opacity:.28;transition:opacity .6s var(--ease)}
+.tagline .w.on{opacity:1}
+.tagline .w.hl.on{color:var(--accent)}
+@media (max-width:760px){.tagline{padding:96px 0 16px}.tagline p{font-size:30px;line-height:36px}}
+
+/* ---------- route ---------- */
+.prog{display:flex;align-items:center;gap:16px;padding:16px 24px;background:var(--surface);border:1px solid var(--line);border-radius:16px;margin-bottom:16px}
+.bar{flex:1;height:8px;border-radius:4px;background:var(--surface-2);overflow:hidden}
+.bar i{display:block;height:100%;width:100%;transform-origin:left;transform:scaleX(0);background:var(--ok);transition:transform .5s var(--ease)}
+.prog b{font:600 14px/20px var(--mono);white-space:nowrap}
+.stages{display:grid;gap:8px}
+.stage{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;transition:border-color .3s var(--ease)}
+.stage[open]{border-color:var(--accent)}
+.stage>summary{list-style:none;display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:16px;align-items:center;padding:16px 24px 16px 16px;cursor:pointer}
 .stage>summary::-webkit-details-marker{display:none}
-.stage .num{width:40px;height:40px;border-radius:12px;background:var(--accent-soft);color:var(--accent);font:600 18px/40px var(--f-mono);text-align:center}
-.stage.done .num{background:var(--ok);color:#fff}
-.stage h3{margin:0;font:600 17px/1.3 var(--f-body)}
-.stage .meta{font:500 13px/1.4 var(--f-mono);color:var(--muted)}
-.stage .chev{font:600 18px var(--f-mono);color:var(--muted);transition:transform .2s}
+.stage .num{width:48px;height:48px;border-radius:12px;background:var(--surface-2);font:600 18px/48px var(--mono);text-align:center;color:var(--muted);transition:background-color .3s var(--ease),color .3s var(--ease)}
+.stage[open] .num{background:var(--accent);color:var(--accent-ink)}
+.stage.done .num{background:var(--ok);color:var(--accent-ink)}
+.stage h3{font:700 18px/28px var(--f)}
+.stage .meta{font:500 12px/16px var(--mono);color:var(--muted);margin-top:4px}
+.stage .chev{width:24px;height:24px;color:var(--muted);transition:transform .5s var(--ease)}
 .stage[open] .chev{transform:rotate(90deg)}
-.stage .body{padding:0 16px 18px 74px}
-.stage .body p{margin:0 0 10px;max-width:72ch}
-.stage .row{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;margin:12px 0 0}
-.stage label{display:inline-flex;gap:8px;align-items:center;font-weight:600;font-size:14px;cursor:pointer}
-.stage label input{width:18px;height:18px;accent-color:var(--ok)}
-.strip{display:grid;grid-auto-flow:column;grid-auto-columns:176px;gap:10px;overflow-x:auto;padding:4px 2px 10px;margin-top:12px;scroll-snap-type:x proximity}
-.th{scroll-snap-align:start;text-decoration:none;color:var(--ink);font-weight:400;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--bg);position:relative;transition:transform .15s,border-color .15s}
+.stage .body{padding:0 24px 24px 80px}
+.stage .body p{margin:0;max-width:72ch;color:var(--muted)}
+.strip{display:grid;grid-auto-flow:column;grid-auto-columns:168px;gap:12px;overflow-x:auto;padding:4px 2px 12px;margin-top:16px;scroll-snap-type:x proximity}
+.th{scroll-snap-align:start;text-decoration:none;color:var(--ink);border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--bg);position:relative;transition:transform .5s var(--ease),border-color .3s var(--ease)}
 .th:hover{transform:translateY(-2px);border-color:var(--accent)}
 .th img{width:100%;aspect-ratio:4/3;object-fit:cover}
-.th span{display:block;padding:7px 9px 9px;font-size:12.5px;line-height:1.3}
-.th em{position:absolute;top:6px;left:6px;font:600 11px/1 var(--f-mono);font-style:normal;background:rgba(20,25,22,.8);color:#fff;padding:4px 6px;border-radius:6px}
-.th.ok em{background:var(--ok)}
+.th span{display:block;padding:8px;font-size:12px;line-height:16px}
+.th em{position:absolute;top:4px;left:4px;font:600 12px/16px var(--mono);font-style:normal;background:rgba(19,18,9,.82);color:#fff;padding:2px 8px;border-radius:8px}
+.th.ok em{background:var(--ok);color:#131209}
 .th.ok em::after{content:" ✓"}
-@media (max-width:640px){.stage .body{padding-left:16px}.stage>summary{grid-template-columns:40px minmax(0,1fr) auto}}
-/* files */
-.files{width:100%;border-collapse:collapse;font-size:14px}
-.files td,.files th{padding:9px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
-.files th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
-.files td:first-child{font-family:var(--f-mono);white-space:nowrap}
-.tw{overflow-x:auto}
-.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
-.grid2 .card{padding:14px 16px}
-.grid2 ul{margin:6px 0 0;padding-left:20px}
-.warn{background:var(--warn-soft);border-left:3px solid var(--warn);border-radius:10px;padding:12px 14px;margin-top:14px}
-.warn b{color:var(--warn)}
-.foot{margin-top:40px;color:var(--muted);font-size:14px}
-</style></head><body><div class="wrap">
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;margin-top:16px}
+.row a:not(.btn){font-weight:600;font-size:14px;line-height:20px}
+.check{display:inline-flex;gap:8px;align-items:center;font:600 14px/20px var(--f);cursor:pointer;margin-left:auto}
+.check input{width:20px;height:20px;accent-color:var(--ok);margin:0}
+@media (max-width:640px){.stage .body{padding:0 16px 16px}.stage>summary{grid-template-columns:40px minmax(0,1fr) auto;padding:12px 16px 12px 12px;gap:12px}.stage .num{width:40px;height:40px;line-height:40px;font-size:16px}.stage h3{font-size:16px;line-height:24px}.check{margin-left:0}}
 
+/* ---------- need ---------- */
+.need{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.need .fact ul{margin:12px 0 0;padding-left:20px;color:var(--muted);font-size:14px;line-height:20px}
+.need .fact li+li{margin-top:4px}
+.need .fact li a{font-weight:600}
+.safety{display:flex;gap:16px;align-items:flex-start;margin-top:16px;padding:24px;border-radius:16px;border:1px solid var(--warn);background:var(--warn-soft)}
+.safety svg{width:24px;height:24px;color:var(--warn);flex:none}
+.safety p{margin:0;font-size:14px;line-height:20px}
+.safety b{color:var(--warn)}
+.en-note{display:none;margin:0 0 16px;padding:12px 16px;border-radius:12px;border:1px solid var(--line);background:var(--surface);font-size:14px;line-height:20px;color:var(--muted)}
+html[lang="en"] .en-note{display:block}
+
+/* ---------- deep ---------- */
+.acc{display:grid;gap:8px}
+.acc details{background:var(--surface);border:1px solid var(--line);border-radius:16px;transition:border-color .3s var(--ease)}
+.acc details[open]{border-color:var(--accent)}
+.acc summary{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:16px 24px;cursor:pointer;font:700 16px/24px var(--f)}
+.acc summary::-webkit-details-marker{display:none}
+.acc summary small{display:block;font:400 14px/20px var(--f);color:var(--muted);margin-top:2px}
+.acc summary svg{width:24px;height:24px;flex:none;color:var(--muted);transition:transform .5s var(--ease)}
+.acc details[open]>summary svg{transform:rotate(45deg)}
+.acc .in{padding:0 24px 24px}
+.specs{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px}
+.spec{padding:12px 16px;border-radius:12px;background:var(--surface-2)}
+.spec b{display:block;font:600 20px/28px var(--mono);color:var(--accent)}
+.spec span{font-size:14px;line-height:20px;color:var(--muted)}
+.how{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:24px;align-items:start}
+.how .pic{position:relative;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+.how .pic button{position:absolute;width:32px;height:32px;margin:-16px 0 0 -16px;border-radius:50%;border:2px solid #fff;background:var(--accent);color:var(--accent-ink);font:600 14px var(--mono);padding:0;opacity:0;transition:opacity .3s var(--ease)}
+.how .pic button.on{opacity:1;box-shadow:0 0 0 8px rgba(229,138,66,.35)}
+.legend{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.legend li{display:grid;grid-template-columns:24px minmax(0,1fr);gap:12px;padding:8px 12px;border-radius:12px;cursor:pointer;border:1px solid transparent;transition:background-color .3s var(--ease)}
+.legend li:hover,.legend li.on{background:var(--surface-2)}
+.legend .n{width:24px;height:24px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font:600 12px/24px var(--mono);text-align:center}
+.legend p{margin:0;font-size:14px;line-height:20px}
+@media (max-width:820px){.how{grid-template-columns:1fr}}
+.tw{overflow-x:auto}
+.files{width:100%;border-collapse:collapse;font-size:14px;line-height:20px}
+.files td,.files th{padding:12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.files tr:last-child td{border-bottom:0}
+.files th{font:500 12px/16px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.files td:first-child{font-family:var(--mono);white-space:nowrap}
+.files td:last-child{color:var(--muted)}
+.faq p{margin:0;color:var(--muted);max-width:72ch}
+
+/* ---------- final ---------- */
+.final{margin-top:96px;padding:64px 24px;border-radius:24px;background:var(--surface);border:1px solid var(--line);text-align:center}
+.final h2{font:700 30px/36px var(--f);max-width:680px;margin:12px auto 0}
+.final p{color:var(--muted);max-width:560px;margin:12px auto 32px}
+footer{padding:48px 0 64px;color:var(--muted);font-size:14px;line-height:20px}
+footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:16px}
+footer p{margin:0;max-width:640px}
+</style>
+</head>
+<body>
+<a class="skip" href="#main" data-i18n="skip">Перейти к содержанию</a>
+
+<nav class="nav" aria-label="Навигация">
+ <a class="logo" href="#top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 13h4l2-5 3 10 3-7 2 3h6" stroke="var(--accent)"/></svg><span data-i18n="brand">Народное ЭЭГ</span></a>
+ <div class="links">
+  <a href="#what" data-i18n="n.what">Что это</a>
+  <a href="#route" data-i18n="n.route">Маршрут</a>
+  <a href="#need" data-i18n="n.need">Что нужно</a>
+  <a href="#deep" data-i18n="n.deep">Подробнее</a>
+ </div>
+ <button class="tgl lang" id="langBtn" type="button" aria-label="Язык / Language"><b>RU</b>/EN</button>
+ <button class="tgl" id="themeBtn" type="button" aria-label="Тема"><svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M233.54 142.23a8 8 0 0 0-8-2 88.08 88.08 0 0 1-109.8-109.8 8 8 0 0 0-10-10 104.84 104.84 0 0 0-52.91 37A104 104 0 0 0 136 224a103.09 103.09 0 0 0 62.52-20.88 104.84 104.84 0 0 0 37-52.91 8 8 0 0 0-1.98-7.98Z"/></svg></button>
+ <a class="btn primary sm" href="#route"><span class="cta-txt" data-i18n="n.cta">Начать сборку</span><svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="m205.66 149.66-72 72a8 8 0 0 1-11.32 0l-72-72a8 8 0 0 1 11.32-11.32L120 196.69V40a8 8 0 0 1 16 0v156.69l58.34-58.35a8 8 0 0 1 11.32 11.32Z"/></svg></a>
+</nav>
+
+<main id="main">
+<div class="wrap" id="top">
+
+<!-- ================= HERO ================= -->
 <header class="hero">
  <div>
-  <div class="kicker">DIY-EEG-OpenMind · ADS1299 + ESP32-S3</div>
-  <h1>Народное ЭЭГ: восьмиканальный энцефалограф, который можно собрать дома</h1>
-  <p class="lead">Плата ЭЭГ с Bluetooth, прозрачный корпус из оргстекла, панель для электродов и питание от аккумулятора. Каждый шаг показан на 3D-модели, которую можно крутить и разглядывать. Всё работает без интернета.</p>
-  <div class="specs">
-   <div class="spec"><b>8</b><span>каналов ЭЭГ</span></div>
-   <div class="spec"><b>24 бит</b><span>АЦП ADS1299</span></div>
-   <div class="spec"><b>250 Гц</b><span>частота отсчётов</span></div>
-   <div class="spec"><b>BLE</b><span>передача на компьютер</span></div>
-   <div class="spec"><b>LiPo</b><span>аккумулятор, зарядка USB-C</span></div>
-   <div class="spec"><b>137×73</b><span>корпус, мм</span></div>
+  <div class="label" data-i18n="h.kicker">Открытое железо · ADS1299 + ESP32-S3</div>
+  <h1 data-i18n="h.title">Соберите свой ЭЭГ<br>на восемь каналов</h1>
+  <p class="sub" data-i18n="h.sub">Это прибор, который записывает электрическую активность мозга и по Bluetooth передаёт её на компьютер. Каждый шаг сборки показан на 3D-модели, которую можно крутить прямо в браузере.</p>
+  <div class="btns">
+   <a class="btn primary" href="#route"><span data-i18n="h.cta">Начать сборку по шагам</span><svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="m205.66 149.66-72 72a8 8 0 0 1-11.32 0l-72-72a8 8 0 0 1 11.32-11.32L120 196.69V40a8 8 0 0 1 16 0v156.69l58.34-58.35a8 8 0 0 1 11.32 11.32Z"/></svg></a>
+   <a class="btn ghost" href="#what" data-i18n="h.cta2">Что это такое</a>
   </div>
-  <div class="btns"><a class="btn" href="#route">Начать сборку ↓</a><a class="btn ghost" href="04-panel-enclosure-3d.html#1">Покрутить прибор в 3D</a><a class="btn ghost" href="../hardware/pcb/gerber-rezonit.zip">Гербер платы</a></div>
+  <ul class="facts">
+   <li data-i18n="h.f1"><b>6</b> этапов</li>
+   <li data-i18n="h.f2"><b>43</b> шага в 3D</li>
+   <li data-i18n="h.f3"><b>≈ 11–14 ч</b> работы</li>
+   <li data-i18n="h.f4"><b>GPL v3</b> все файлы открыты</li>
+  </ul>
  </div>
- <a class="shot" href="04-panel-enclosure-3d.html#1" title="Открыть 3D и покрутить прибор"><img src="img/device.jpg" alt="Собранный прибор: плата в прозрачном корпусе, электроды подключены к панели"><span class="tag">Нажмите, чтобы покрутить прибор в 3D</span></a>
+ <figure class="bench">
+  <a href="04-panel-enclosure-3d.html#1"><img src="img/device.jpg" width="1018" height="674" alt="Собранный прибор: плата в прозрачном корпусе, электроды подключены к панели" data-i18n-alt="h.alt"></a>
+  <figcaption><span data-i18n="h.fig">рис. 1 · готовый прибор, 137 × 73 мм</span><a href="04-panel-enclosure-3d.html#1" data-i18n="h.rot">Покрутить в 3D →</a></figcaption>
+ </figure>
 </header>
 
-<h2>Что получится</h2>
-<p class="sub">Три части, которые вы соберёте по инструкциям. Нажмите на картинку, чтобы открыть нужный шаг в 3D.</p>
-<div class="result">
- <a class="card" href="02-tests-3d.html#1" style="text-decoration:none;color:inherit;font-weight:400"><figure><img src="img/board.jpg" alt="Собранная плата"><figcaption><b>Плата ЭЭГ</b>4 слоя, 100 × 50 мм. ADS1299 снимает 8 каналов, ESP32-S3 передаёт сигнал по Bluetooth.</figcaption></figure></a>
- <a class="card" href="04-panel-enclosure-3d.html#3" style="text-decoration:none;color:inherit;font-weight:400"><figure><img src="img/case.jpg" alt="Корпус из оргстекла"><figcaption><b>Корпус из оргстекла 3 мм</b>Вырезается из одного листа 300 × 200 мм на лазере или вручную, склеивается за вечер.</figcaption></figure></a>
- <a class="card" href="04-panel-enclosure-3d.html#4" style="text-decoration:none;color:inherit;font-weight:400"><figure><img src="img/panel.jpg" alt="Панель с гнёздами для электродов"><figcaption><b>Панель электродов</b>10 гнёзд TouchProof: 8 каналов, REF и BIAS. Подходят шапки MCScap и любые электроды с разъёмом 1,5 мм.</figcaption></figure></a>
+<!-- ================= WHAT ================= -->
+<section id="what" class="rv">
+ <div class="head">
+  <div class="label" data-i18n="w.k">01 · Что это</div>
+  <h2 data-i18n="w.t">Электроды на голове, сигнал на экране</h2>
+  <p data-i18n="w.p">Электроды ловят микровольтовые колебания с кожи головы. Плата усиливает их, превращает в цифры и отправляет на компьютер. Так выглядят восемь каналов в программе просмотра.</p>
+ </div>
+ <div class="what">
+  <div class="scope">
+   <div class="top">
+    <span data-i18n="w.sim">симуляция · 8 каналов · 250 Гц</span>
+    <button class="eyes" id="eyesBtn" type="button"><svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M247.31 124.76c-.35-.79-8.82-19.58-27.65-38.41C194.57 61.26 162.88 48 128 48S61.43 61.26 36.34 86.35C17.51 105.18 9 124 8.69 124.76a8 8 0 0 0 0 6.5c.35.79 8.82 19.57 27.65 38.4C61.43 194.74 93.12 208 128 208s66.57-13.26 91.66-38.34c18.83-18.83 27.3-37.61 27.65-38.4a8 8 0 0 0 0-6.5ZM128 168a40 40 0 1 1 40-40 40 40 0 0 1-40 40Z"/></svg><span data-i18n="w.close">Закрыть глаза</span></button>
+   </div>
+   <canvas id="scope" aria-label="Анимация: восемь каналов ЭЭГ" role="img"></canvas>
+   <p class="note" id="eyesNote" data-i18n="w.open">Глаза открыты: сигнал мелкий и неровный. Нажмите кнопку и посмотрите, что изменится.</p>
+  </div>
+  <div class="facts3">
+   <div class="fact"><div class="ico"><svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M240 128a8 8 0 0 1-8 8h-36.06l-25.79 64.47A8 8 0 0 1 162.71 205h-.21a8 8 0 0 1-7.41-5.53L104.6 46.7 79.43 125.57A8 8 0 0 1 72 131H24a8 8 0 0 1 0-16h42.15l31.11-97.47a8 8 0 0 1 15.19-.07l50.82 152.39L182.3 120a8 8 0 0 1 7.42-5H232a8 8 0 0 1 8 8Z"/></svg></div><h3 data-i18n="w.f1t">Снимает 8 каналов</h3><p data-i18n="w.f1p">Микросхема ADS1299, та же, что в исследовательских приборах. 24 бита, 250 отсчётов в секунду.</p></div>
+   <div class="fact"><div class="ico"><svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M196.8 169.6 141.33 128l55.47-41.6a8 8 0 0 0 0-12.8l-64-48A8 8 0 0 0 120 32v80L68.8 73.6a8 8 0 0 0-9.6 12.8l55.47 41.6-55.47 41.6a8 8 0 1 0 9.6 12.8L120 144v80a8 8 0 0 0 12.8 6.4l64-48a8 8 0 0 0 0-12.8ZM136 48l42.67 32L136 112Zm0 160v-64l42.67 32Z"/></svg></div><h3 data-i18n="w.f2t">Передаёт по Bluetooth</h3><p data-i18n="w.f2p">Работает от аккумулятора, без провода к компьютеру. Сигнал смотрите в Chrome на любой системе.</p></div>
+   <div class="fact"><div class="ico"><svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M248 124a56.11 56.11 0 0 0-32-50.61V72a48 48 0 0 0-88-26.49A48 48 0 0 0 40 72v1.39a56 56 0 0 0 0 101.2V176a48 48 0 0 0 88 26.49A48 48 0 0 0 216 176v-1.41A56.09 56.09 0 0 0 248 124ZM88 208a32 32 0 0 1-31.81-28.56A55.87 55.87 0 0 0 64 180h8a8 8 0 0 0 0-16h-8a40 40 0 0 1-13.33-77.73A8 8 0 0 0 56 78.73V72a32 32 0 0 1 64 0v68.26A47.8 47.8 0 0 0 88 128a8 8 0 0 0 0 16 32 32 0 0 1 0 64Zm104-44h-8a8 8 0 0 0 0 16h8a55.87 55.87 0 0 0 7.81-.56A32 32 0 1 1 168 144a8 8 0 0 0 0-16 47.8 47.8 0 0 0-32 12.26V72a32 32 0 0 1 64 0v6.73a8 8 0 0 0 5.33 7.54A40 40 0 0 1 192 164Z"/></svg></div><h3 data-i18n="w.f3t">Для экспериментов</h3><p data-i18n="w.f3p">Нейрофидбек, интерфейсы мозг‑компьютер, учёба. Это самодельный прибор, а не медицинский.</p></div>
+  </div>
+ </div>
+
+ <div class="parts">
+  <a class="part" href="02-tests-3d.html#1"><img src="img/board.jpg" alt="Собранная плата ЭЭГ" loading="lazy" data-i18n-alt="p.a1"><div><h3 data-i18n="p.t1">Плата</h3><p data-i18n="p.p1">4 слоя, 100 × 50 мм. Паяется на нагревательном столике по трафарету.</p></div></a>
+  <a class="part" href="04-panel-enclosure-3d.html#3"><img src="img/case.jpg" alt="Корпус из оргстекла" loading="lazy" data-i18n-alt="p.a2"><div><h3 data-i18n="p.t2">Корпус</h3><p data-i18n="p.p2">Оргстекло 3 мм, один лист 300 × 200. Режется лазером или вручную, клеится за вечер.</p></div></a>
+  <a class="part" href="04-panel-enclosure-3d.html#4"><img src="img/panel.jpg" alt="Панель с гнёздами для электродов" loading="lazy" data-i18n-alt="p.a3"><div><h3 data-i18n="p.t3">Панель электродов</h3><p data-i18n="p.p3">10 гнёзд TouchProof: 8 каналов, REF и BIAS. Подходят шапки MCScap.</p></div></a>
+ </div>
+</section>
+
+<!-- ================= TAGLINE ================= -->
+<div class="tagline" id="tagline"><p data-i18n="tag" data-split>Мозг говорит микровольтами. *Этот прибор их слышит,* и вы соберёте его сами.</p></div>
+
+<!-- ================= ROUTE ================= -->
+<section id="route" class="rv">
+ <div class="head">
+  <div class="label" data-i18n="r.k">02 · Маршрут сборки</div>
+  <h2 data-i18n="r.t">Шесть этапов от пакета деталей до альфа-ритма</h2>
+  <p data-i18n="r.p">Идите сверху вниз. Откройте этап, нажмите на картинку шага, и 3D-инструкция откроется сразу на нём. Прогресс сохраняется в этом браузере.</p>
+ </div>
+ <p class="en-note" data-i18n="r.en">The 3D guides are in Russian for now. The models, part labels and photos speak for themselves, and a browser translator handles the step text well.</p>
+ <div class="prog"><div class="bar"><i id="barFill"></i></div><b id="progText">0 / 6</b></div>
+ <div class="stages" id="stages"></div>
+</section>
+
+<!-- ================= NEED ================= -->
+<section id="need" class="rv">
+ <div class="head">
+  <div class="label" data-i18n="n.k">03 · Что нужно</div>
+  <h2 data-i18n="n.t">Перед первым шагом</h2>
+  <p data-i18n="n.p">Заказ платы и деталей занимает одну–три недели. Пока ждёте, пролистайте все инструкции целиком.</p>
+ </div>
+ <div class="need">
+  <div class="fact"><div class="ico"><svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M224 64h-32V48a24 24 0 0 0-24-24H88a24 24 0 0 0-24 24v16H32a16 16 0 0 0-16 16v128a16 16 0 0 0 16 16h192a16 16 0 0 0 16-16V80a16 16 0 0 0-16-16ZM80 48a8 8 0 0 1 8-8h80a8 8 0 0 1 8 8v16H80Zm144 160H32V80h192Z"/></svg></div><h3 data-i18n="n.c1">Детали и плата</h3>
+   <ul data-i18n="n.l1"><li><a href="../hardware/pcb/gerber-rezonit.zip">Гербер платы</a> для Резонита или <a href="../hardware/pcb/gerber-jlcpcb.zip">JLCPCB</a></li><li><a href="../hardware/shopping-list.csv">Список покупок: плата</a></li><li><a href="../enclosure/shopping-list-panel.csv">Список покупок: корпус и панель</a></li><li>Главная деталь ADS1299, проверяется самотестом</li></ul></div>
+  <div class="fact"><div class="ico"><svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M226.76 69a8 8 0 0 0-12.84-2.88l-40.3 37.19-17.23-3.7-3.7-17.23 37.19-40.3A8 8 0 0 0 187 29.24 72 72 0 0 0 88 96a72.34 72.34 0 0 0 6 28.94L33.79 177c-.15.12-.29.26-.43.39a32 32 0 0 0 45.26 45.26c.13-.13.27-.28.39-.42L131.06 162A72 72 0 0 0 232 96a71.56 71.56 0 0 0-5.24-27Z"/></svg></div><h3 data-i18n="n.c2">Инструменты</h3>
+   <ul data-i18n="n.l2"><li>Нагревательный столик до 250 °C</li><li>Паста Sn63/Pb37, флюс, пинцет, лупа</li><li>Паяльник с тонким жалом, фен</li><li>Мультиметр, изопропиловый спирт</li><li>Лабораторный блок питания, желательно</li></ul></div>
+  <div class="fact"><div class="ico"><svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M216 40H40a16 16 0 0 0-16 16v144a16 16 0 0 0 16 16h176a16 16 0 0 0 16-16V56a16 16 0 0 0-16-16Zm0 160H40V56h176ZM80 84a12 12 0 1 1-12-12 12 12 0 0 1 12 12Zm40 0a12 12 0 1 1-12-12 12 12 0 0 1 12 12Z"/></svg></div><h3 data-i18n="n.c3">Программы</h3>
+   <ul data-i18n="n.l3"><li>VS Code с расширением PlatformIO</li><li><a href="../firmware/selftest/">Прошивка самотеста</a> и <a href="../firmware/eeg/">рабочая прошивка</a></li><li><a href="viewer.html">Просмотр сигнала</a> в Chrome или Edge</li><li>Опыт пайки SMD поможет, но всё показано по шагам</li></ul></div>
+ </div>
+ <div class="safety" role="note"><svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M236.8 188.09 149.35 36.22a24.76 24.76 0 0 0-42.7 0L19.2 188.09a23.51 23.51 0 0 0 0 23.72A24.35 24.35 0 0 0 40.55 224h174.9a24.35 24.35 0 0 0 21.33-12.19 23.51 23.51 0 0 0 .02-23.72ZM120 104a8 8 0 0 1 16 0v40a8 8 0 0 1-16 0Zm8 88a12 12 0 1 1 12-12 12 12 0 0 1-12 12Z"/></svg><p data-i18n="n.safe"><b>Безопасность.</b> Надевайте электроды, только когда прибор работает от аккумулятора или подключён через USB-изолятор. Это самодельный прибор для экспериментов, а не медицинское изделие. Подробно в <a href="../SAFETY.md">SAFETY.md</a>.</p></div>
+</section>
+
+<!-- ================= DEEP ================= -->
+<section id="deep" class="rv">
+ <div class="head">
+  <div class="label" data-i18n="d.k">04 · Подробнее</div>
+  <h2 data-i18n="d.t">Для тех, кто хочет глубже</h2>
+  <p data-i18n="d.p">Характеристики, все файлы, выбор электродов и ответы на частые вопросы. Раскройте то, что интересно.</p>
+ </div>
+ <div class="acc">
+  <details><summary><span><span data-i18n="d.s1">Характеристики</span><small data-i18n="d.s1s">Каналы, разрядность, питание, размеры</small></span><svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M224 128a8 8 0 0 1-8 8h-80v80a8 8 0 0 1-16 0v-80H40a8 8 0 0 1 0-16h80V40a8 8 0 0 1 16 0v80h80a8 8 0 0 1 8 8Z"/></svg></summary>
+   <div class="in"><div class="specs" data-i18n="d.specs">
+    <div class="spec"><b>8</b><span>каналов ЭЭГ</span></div>
+    <div class="spec"><b>24 бит</b><span>АЦП ADS1299</span></div>
+    <div class="spec"><b>250 Гц</b><span>частота отсчётов</span></div>
+    <div class="spec"><b>BLE</b><span>Bluetooth на ESP32-S3</span></div>
+    <div class="spec"><b>LiPo</b><span>аккумулятор, зарядка USB-C</span></div>
+    <div class="spec"><b>137 × 73</b><span>корпус, мм</span></div>
+   </div></div></details>
+
+  <details><summary><span><span data-i18n="d.s2">Как устроены 3D-инструкции</span><small data-i18n="d.s2s">Поиск детали, подписи, отметка «шаг выполнен»</small></span><svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M224 128a8 8 0 0 1-8 8h-80v80a8 8 0 0 1-16 0v-80H40a8 8 0 0 1 0-16h80V40a8 8 0 0 1 16 0v80h80a8 8 0 0 1 8 8Z"/></svg></summary>
+   <div class="in"><div class="how">
+    <div class="pic" id="pic"><img src="img/how-to-use.jpg" alt="Экран 3D-инструкции с пронумерованными элементами" loading="lazy" data-i18n-alt="d.howalt"></div>
+    <ol class="legend" id="legend" data-i18n="d.legend">
+     <li><span class="n">1</span><p><b>Номера шагов.</b> Нажмите на любой, чтобы перейти. Выполненные подсвечиваются.</p></li>
+     <li><span class="n">2</span><p><b>Поиск детали.</b> Введите R27, C15 или U4, и модель покажет, где она стоит.</p></li>
+     <li><span class="n">3</span><p><b>Кнопки вида:</b> повтор анимации, подписи, переворот платы, вид сверху.</p></li>
+     <li><span class="n">4</span><p><b>3D-сцена.</b> Мышью крутите и приближайте, на телефоне одним и двумя пальцами.</p></li>
+     <li><span class="n">5</span><p><b>Нажмите на деталь,</b> чтобы увидеть номинал, корпус и подсказку.</p></li>
+     <li><span class="n">6</span><p><b>Текст шага:</b> что делать, предупреждения, таблица деталей.</p></li>
+     <li><span class="n">7</span><p><b>«Шаг выполнен»</b> запоминается, и прогресс виден на этой странице. Листать можно клавишами ← →.</p></li>
+    </ol>
+   </div></div></details>
+
+  <details><summary><span><span data-i18n="d.s3">Все файлы</span><small data-i18n="d.s3s">Гербер, трафареты, чертежи, прошивки, перечень элементов</small></span><svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M224 128a8 8 0 0 1-8 8h-80v80a8 8 0 0 1-16 0v-80H40a8 8 0 0 1 0-16h80V40a8 8 0 0 1 16 0v80h80a8 8 0 0 1 8 8Z"/></svg></summary>
+   <div class="in tw"><table class="files"><thead><tr><th data-i18n="d.th1">Файл</th><th data-i18n="d.th2">Зачем</th></tr></thead><tbody data-i18n="d.files">
+    <tr><td><a href="01-assembly-3d.html">01 Сборка платы</a></td><td>16 шагов в 3D: паста, детали, столик, нижняя сторона, отмывка</td></tr>
+    <tr><td><a href="02-tests-3d.html">02 Проверка</a></td><td>14 проверок от прозвонки до альфа-ритма, с таблицами неисправностей</td></tr>
+    <tr><td><a href="03-checklist.html">03 Чек-лист</a></td><td>Все шаги на бумаге, 3 листа A4</td></tr>
+    <tr><td><a href="04-panel-enclosure-3d.html">04 Панель и корпус</a></td><td>13 шагов в 3D: корпус, гнёзда, проводка к J3, аккумулятор, зарядка</td></tr>
+    <tr><td><a href="viewer.html">viewer.html</a></td><td>Просмотр 8 каналов в Chrome по Bluetooth</td></tr>
+    <tr><td><a href="../hardware/">hardware/</a></td><td>Гербер и трафареты для Резонита и JLCPCB, перечень элементов, схема автора</td></tr>
+    <tr><td><a href="../enclosure/">enclosure/</a></td><td>DXF раскроя, чертежи и шаблон сверловки 1:1</td></tr>
+    <tr><td><a href="../firmware/">firmware/</a></td><td>Самотест ADS1299 и рабочая прошивка, проекты PlatformIO</td></tr>
+   </tbody></table></div></details>
+
+  <details><summary><span><span data-i18n="d.s4">Какие электроды выбрать</span><small data-i18n="d.s4s">Мокрые, сухие, активные, шапка MCScap</small></span><svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M224 128a8 8 0 0 1-8 8h-80v80a8 8 0 0 1-16 0v-80H40a8 8 0 0 1 0-16h80V40a8 8 0 0 1 16 0v80h80a8 8 0 0 1 8 8Z"/></svg></summary>
+   <div class="in faq"><p data-i18n="d.el">Для первой записи берите мокрые Ag/AgCl: сухой контакт ловит сетевую помеху 50 Гц на уровне альфа-ритма. Разбор по шагам: <a href="electrodes/01-electrodes-review.html">обзор электродов</a>, <a href="electrodes/02-mcscap-choice.html">выбор шапки MCScap</a>, <a href="electrodes/03-active-electrodes.html">активные электроды</a>.</p></div></details>
+
+  <details><summary><span data-i18n="q1">Нужен ли опыт пайки?</span><svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M224 128a8 8 0 0 1-8 8h-80v80a8 8 0 0 1-16 0v-80H40a8 8 0 0 1 0-16h80V40a8 8 0 0 1 16 0v80h80a8 8 0 0 1 8 8Z"/></svg></summary>
+   <div class="in faq"><p data-i18n="a1">Желателен. Самая сложная деталь, ADS1299, имеет выводы с шагом 0,5 мм. Её не паяют паяльником: паста наносится через трафарет, а плата плавится на столике. Каждое движение показано в 3D, а после сборки самотест сам скажет, всё ли в порядке.</p></div></details>
+  <details><summary><span data-i18n="q2">Сколько это стоит?</span><svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M224 128a8 8 0 0 1-8 8h-80v80a8 8 0 0 1-16 0v-80H40a8 8 0 0 1 0-16h80V40a8 8 0 0 1 16 0v80h80a8 8 0 0 1 8 8Z"/></svg></summary>
+   <div class="in faq"><p data-i18n="a2">Больше всего стоят ADS1299 и изготовление платы. Ориентиры цен по каждой позиции с магазинами есть в <a href="../hardware/shopping-list.csv">списке покупок для платы</a> и <a href="../enclosure/shopping-list-panel.csv">для корпуса</a>. Электроды и шапка считаются отдельно.</p></div></details>
+  <details><summary><span data-i18n="q3">Это медицинский прибор?</span><svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M224 128a8 8 0 0 1-8 8h-80v80a8 8 0 0 1-16 0v-80H40a8 8 0 0 1 0-16h80V40a8 8 0 0 1 16 0v80h80a8 8 0 0 1 8 8Z"/></svg></summary>
+   <div class="in faq"><p data-i18n="a3">Нет. Это стенд для экспериментов, нейрофидбека и учёбы. Он не ставит диагнозов и не проходил сертификацию.</p></div></details>
+  <details><summary><span data-i18n="q4">Чем это отличается от исходной платы Low-Cost-EEG?</span><svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M224 128a8 8 0 0 1-8 8h-80v80a8 8 0 0 1-16 0v-80H40a8 8 0 0 1 0-16h80V40a8 8 0 0 1 16 0v80h80a8 8 0 0 1 8 8Z"/></svg></summary>
+   <div class="in faq"><p data-i18n="a4">Схема и разводка те же. Исправлены сверловка и номиналы в перечне, добавлены 3D-инструкции, самотест, рабочая прошивка, просмотр сигнала, корпус, панель электродов и питание от аккумулятора. Список изменений в <a href="https://github.com/PaperPit/DIY-EEG-OpenMind#readme">README</a>.</p></div></details>
+  <details><summary><span data-i18n="q5">Можно работать без интернета?</span><svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M224 128a8 8 0 0 1-8 8h-80v80a8 8 0 0 1-16 0v-80H40a8 8 0 0 1 0-16h80V40a8 8 0 0 1 16 0v80h80a8 8 0 0 1 8 8Z"/></svg></summary>
+   <div class="in faq"><p data-i18n="a5">Да. Скачайте репозиторий через Code → Download ZIP, распакуйте и откройте docs/index.html. Все 3D-инструкции работают локально.</p></div></details>
+ </div>
+</section>
+
+<!-- ================= FINAL CTA ================= -->
+<div class="final rv">
+ <div class="label" data-i18n="f.k">Готовы?</div>
+ <h2 data-i18n="f.t">Начните с первого этапа</h2>
+ <p data-i18n="f.p">Подготовка занимает около часа: пролистать инструкции, разложить детали и распечатать чек-лист.</p>
+ <a class="btn primary" href="#route" id="finalCta"><span data-i18n="f.cta">Открыть маршрут сборки</span><svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="m205.66 149.66-72 72a8 8 0 0 1-11.32 0l-72-72a8 8 0 0 1 11.32-11.32L120 196.69V40a8 8 0 0 1 16 0v156.69l58.34-58.35a8 8 0 0 1 11.32 11.32Z"/></svg></a>
 </div>
 
-<h2>Как пользоваться 3D-инструкциями</h2>
-<p class="sub">Все три инструкции устроены одинаково. Наведите на пункт справа, чтобы увидеть, где это на экране.</p>
-<div class="how">
- <div class="pic" id="pic"><img src="img/how-to-use.jpg" alt="Экран 3D-инструкции с пронумерованными элементами"></div>
- <ol class="legend" id="legend">
-  <li data-k="1"><span class="n">1</span><p><b>Номера шагов.</b> Нажмите на любой, чтобы перейти. Выполненные шаги подсвечиваются.</p></li>
-  <li data-k="2"><span class="n">2</span><p><b>Поиск детали.</b> Введите R27, C15 или U4, и модель покажет, где она стоит.</p></li>
-  <li data-k="3"><span class="n">3</span><p><b>Кнопки вида:</b> повторить анимацию, все подписи, перевернуть плату, вид сверху. В инструкции по корпусу ещё крышка и прозрачность.</p></li>
-  <li data-k="4"><span class="n">4</span><p><b>3D-сцена.</b> Крутите левой кнопкой мыши, приближайте колесом, двигайте правой кнопкой. На телефоне одним и двумя пальцами.</p></li>
-  <li data-k="5"><span class="n">5</span><p><b>Нажмите на деталь,</b> чтобы увидеть её номинал, корпус и подсказку по установке.</p></li>
-  <li data-k="6"><span class="n">6</span><p><b>Текст шага:</b> что делать, предупреждения и таблица деталей этого шага.</p></li>
-  <li data-k="7"><span class="n">7</span><p><b>«Шаг выполнен»</b> запоминается в браузере, и прогресс виден на этой странице. Листать шаги можно клавишами <span class="kbd">←</span> <span class="kbd">→</span>.</p></li>
- </ol>
 </div>
+</main>
 
-<h2 id="route">Маршрут сборки</h2>
-<p class="sub">Шесть этапов сверху вниз. Раскройте этап, чтобы увидеть все его шаги. Нажмите на картинку шага, и инструкция откроется сразу на нём.</p>
-<div class="card prog"><div class="bar"><i id="barFill"></i></div><b id="progText">0 из 6 этапов</b></div>
-<div id="stages"></div>
+<footer><div class="wrap">
+ <p data-i18n="foot">Плата <a href="https://github.com/XavierAsghar/Low-Cost-EEG">Low-Cost-EEG</a>, автор Xavier Asghar, GPL v3. Инструкции, корпус, панель и прошивки этого проекта распространяются на тех же условиях. Прогресс хранится только в вашем браузере.</p>
+ <p><a href="https://github.com/PaperPit/DIY-EEG-OpenMind">GitHub</a> · <a href="../LICENSE">LICENSE</a> · <a href="../SAFETY.md">SAFETY</a></p>
+</div></footer>
 
-<h2>Перед началом</h2>
-<div class="grid2">
- <div class="card"><b>Инструменты</b><ul><li>Нагревательный столик до 250 °C</li><li>Паста Sn63/Pb37, трафареты TOP и BOTTOM 0,12 мм</li><li>Флюс RMA-223, пинцет, лупа, оплётка</li><li>Паяльник с тонким жалом, фен</li><li>Мультиметр, изопропиловый спирт, щётка</li><li>Лабораторный блок питания (желательно)</li></ul></div>
- <div class="card"><b>Программы</b><ul><li>VS Code с расширением PlatformIO</li><li>Прошивка ЭЭГ: папка <span class="mono">firmware/eeg</span> в репозитории</li><li><a href="viewer.html">Просмотр сигнала</a> в Chrome или Edge</li></ul></div>
-</div>
-<div class="warn"><b>Безопасность.</b> Электроды на голове подключайте только при питании от аккумулятора или через USB-изолятор ADuM. Это самодельный прибор для экспериментов, а не медицинское изделие.</div>
-
-<h2>Все файлы</h2>
-<div class="card tw"><table class="files"><thead><tr><th>Файл</th><th>Зачем</th></tr></thead><tbody>
-<tr><td><a href="../hardware/pcb/gerber-rezonit.zip">gerber-rezonit.zip</a></td><td>Гербер печатной платы: 4 слоя, 100 × 50 мм, сверловка совмещена с контуром. Для заказа платы.</td></tr>
-<tr><td><a href="01-assembly-3d.html">01 Сборка платы (3D)</a></td><td>16 шагов: паста, расстановка деталей, столик, нижняя сторона, выводные детали, отмывка.</td></tr>
-<tr><td><a href="02-tests-3d.html">02 Проверка (3D)</a></td><td>14 проверок от прозвонки до альфа-ритма, с примерами вывода и таблицами неисправностей.</td></tr>
-<tr><td><a href="03-checklist.html">03 Чек-лист</a></td><td>Все шаги трёх частей на бумаге, 3 листа A4.</td></tr>
-<tr><td><a href="04-panel-enclosure-3d.html">04 Панель и корпус (3D)</a></td><td>13 шагов: корпус, гнёзда, проводка к J3, аккумулятор с TP4056, зарядка, включение.</td></tr>
-<tr><td><a href="electrodes/01-electrodes-review.html">electrodes/</a></td><td>Какие электроды выбрать: <a href="electrodes/01-electrodes-review.html">обзор</a>, <a href="electrodes/02-mcscap-choice.html">выбор MCScap</a>, <a href="electrodes/03-active-electrodes.html">активные электроды</a>.</td></tr>
-<tr><td><a href="../hardware/">hardware/</a></td><td>Gerber и трафареты для Резонита и JLCPCB, перечень элементов, список покупок, схема автора.</td></tr>
-<tr><td><a href="../enclosure/">enclosure/</a></td><td>DXF раскроя, чертежи и шаблон сверловки 1:1 (печатать в масштабе 100 %), покупки для панели.</td></tr>
-<tr><td><a href="../firmware/selftest/">firmware/selftest/</a></td><td>Прошивка самотеста ADS1299 и инструкция по прошивке.</td></tr>
-</tbody></table></div>
-
-<p class="foot">Плата: <a href="https://github.com/XavierAsghar/Low-Cost-EEG">Low-Cost-EEG</a>, автор Xavier Asghar, GPL v3. Инструкции, корпус, панель и самотест этого проекта распространяются на тех же условиях. Открывайте файлы в Chrome, Edge или Firefox. Прогресс хранится в браузере на этом компьютере.</p>
-</div>
 <script>
-const META={"a": ["Что собираем", "Инструменты и раскладка деталей", "Нанесение пасты через верхний трафарет", "U4 — ADS1299", "Питание: U1, U2, U3", "Защита входов D1–D5 и TVS-диод D7", "Входные резисторы R10–R27", "Остальные резисторы", "Конденсаторы верхней стороны", "ESP32-S3, USB-C и кнопки", "Нагревательный столик", "Осмотр и исправление", "23 детали снизу", "Разъёмы, штырьки и выключатель", "Отмойте флюс", "Первое включение"], "t": ["Как проверить собранную плату", "Осмотр под лупой", "Прозвонка мультиметром", "Первое включение с ограничением тока", "Шесть напряжений", "USB и прошивка самотеста", "ADS1299 отвечает и он настоящий", "Питание, температура и тест-сигнал изнутри", "Собственный шум ADS1299", "Входные цепи через разъёмы", "Пальцевый тест и обрыв электрода", "Рабочая прошивка и Bluetooth", "Аккумулятор", "Живой сигнал: альфа-ритм"], "p": ["Стенд подключения электродов", "Куда подключать: штырьки J3", "Корпус из оргстекла 3 мм", "Раскладка гнёзд на стенке", "Сверлим стенку и ставим гнёзда", "Распайка: гнездо → вывод 1 штырька", "Аккумулятор, TP4056 и тумблер", "Медная фольга внутри корпуса (по желанию)", "Прозвонка до первого включения", "Как заряжать аккумулятор", "Первое включение и обычный запуск", "Подключаем шапку MCScap", "Если хочется переходную плату"]};
+/* ================= i18n ================= */
+const EN={
+ skip:'Skip to content',brand:'People’s EEG','n.what':'What it is','n.route':'Route','n.need':'What you need','n.deep':'Details','n.cta':'Start building',
+ 'h.kicker':'Open hardware · ADS1299 + ESP32-S3',
+ 'h.title':'Build your own<br>eight channel EEG',
+ 'h.sub':'A device that records the electrical activity of the brain and streams it to your computer over Bluetooth. Every assembly step is shown on a 3D model you can rotate right in the browser.',
+ 'h.cta':'Start step by step','h.cta2':'What is this',
+ 'h.f1':'<b>6</b> stages','h.f2':'<b>43</b> steps in 3D','h.f3':'<b>≈ 11–14 h</b> of work','h.f4':'<b>GPL v3</b> all files open',
+ 'h.alt':'Finished device: board in a clear case with electrodes plugged into the panel','h.fig':'fig. 1 · finished device, 137 × 73 mm','h.rot':'Rotate in 3D →',
+ 'w.k':'01 · What it is','w.t':'Electrodes on your head, signal on your screen',
+ 'w.p':'Electrodes pick up microvolt fluctuations from the scalp. The board amplifies them, turns them into numbers and sends them to a computer. This is what eight channels look like in the viewer.',
+ 'w.sim':'simulation · 8 channels · 250 Hz','w.close':'Close eyes','w.openBtn':'Open eyes',
+ 'w.open':'Eyes open: the signal is small and irregular. Press the button and see what changes.',
+ 'w.closed':'Eyes closed: a steady <b>alpha rhythm around 10 Hz</b> appears, strongest at the back of the head (O1, O2, Pz). This is the first thing you will see on your own device.',
+ 'w.f1t':'Records 8 channels','w.f1p':'ADS1299, the same chip used in research devices. 24 bits, 250 samples per second.',
+ 'w.f2t':'Streams over Bluetooth','w.f2p':'Runs on a battery with no cable to the computer. View the signal in Chrome on any system.',
+ 'w.f3t':'Built for experiments','w.f3p':'Neurofeedback, brain computer interfaces, learning. This is a DIY device, not a medical one.',
+ 'p.a1':'Assembled EEG board','p.t1':'Board','p.p1':'4 layers, 100 × 50 mm. Soldered on a hot plate using a stencil.',
+ 'p.a2':'Acrylic case','p.t2':'Case','p.p2':'3 mm acrylic, one 300 × 200 sheet. Laser or hand cut, glued in an evening.',
+ 'p.a3':'Panel with electrode sockets','p.t3':'Electrode panel','p.p3':'10 TouchProof sockets: 8 channels, REF and BIAS. Works with MCScap caps.',
+ tag:'The brain speaks in microvolts. *This device can hear them,* and you will build it yourself.',
+ 'r.k':'02 · Build route','r.t':'Six stages from a bag of parts to an alpha rhythm',
+ 'r.p':'Go top to bottom. Open a stage, tap a step picture, and the 3D guide opens right on that step. Progress is saved in this browser.',
+ 'n.k':'03 · What you need','n.t':'Before the first step','n.p':'Ordering the board and parts takes one to three weeks. While you wait, read through all the guides.',
+ 'n.c1':'Parts and board','n.l1':'<li><a href="../hardware/pcb/gerber-jlcpcb.zip">Gerber for JLCPCB</a> or <a href="../hardware/pcb/gerber-rezonit.zip">Rezonit</a></li><li><a href="../hardware/bom.csv">Bill of materials</a></li><li><a href="../enclosure/shopping-list-panel.csv">Case and panel shopping list</a> (RU)</li><li>The key part is ADS1299, verified by the self test</li>',
+ 'n.c2':'Tools','n.l2':'<li>Hot plate up to 250 °C</li><li>Sn63/Pb37 paste, flux, tweezers, magnifier</li><li>Fine tip soldering iron, hot air</li><li>Multimeter, isopropyl alcohol</li><li>Bench power supply, recommended</li>',
+ 'n.c3':'Software','n.l3':'<li>VS Code with PlatformIO</li><li><a href="../firmware/selftest/">Self test firmware</a> and <a href="../firmware/eeg/">main firmware</a></li><li><a href="viewer.html">Signal viewer</a> in Chrome or Edge</li><li>SMD soldering experience helps, but every step is shown</li>',
+ 'n.safe':'<b>Safety.</b> Put the electrodes on only while the device runs from its battery or through a USB isolator. This is a DIY device for experiments, not a medical one. Details in <a href="../SAFETY.md">SAFETY.md</a>.',
+ 'd.k':'04 · Details','d.t':'For those who want to go deeper','d.p':'Specs, every file, electrode choice and common questions. Open whatever interests you.',
+ 'd.s1':'Specifications','d.s1s':'Channels, resolution, power, size',
+ 'd.specs':'<div class="spec"><b>8</b><span>EEG channels</span></div><div class="spec"><b>24 bit</b><span>ADS1299 ADC</span></div><div class="spec"><b>250 Hz</b><span>sample rate</span></div><div class="spec"><b>BLE</b><span>Bluetooth on ESP32-S3</span></div><div class="spec"><b>LiPo</b><span>battery, USB-C charging</span></div><div class="spec"><b>137 × 73</b><span>case, mm</span></div>',
+ 'd.s2':'How the 3D guides work','d.s2s':'Part search, labels, “step done” marks','d.howalt':'3D guide screen with numbered controls',
+ 'd.legend':'<li><span class="n">1</span><p><b>Step numbers.</b> Tap any to jump. Finished steps are highlighted.</p></li><li><span class="n">2</span><p><b>Part search.</b> Type R27, C15 or U4 and the model shows where it sits.</p></li><li><span class="n">3</span><p><b>View buttons:</b> replay, labels, flip the board, top view.</p></li><li><span class="n">4</span><p><b>3D scene.</b> Rotate and zoom with the mouse, or one and two fingers on a phone.</p></li><li><span class="n">5</span><p><b>Tap a part</b> to see its value, package and a tip.</p></li><li><span class="n">6</span><p><b>Step text:</b> what to do, warnings, parts table.</p></li><li><span class="n">7</span><p><b>“Step done”</b> is remembered and shows up on this page. Use ← → to flip steps.</p></li>',
+ 'd.s3':'All files','d.s3s':'Gerber, stencils, drawings, firmware, bill of materials','d.th1':'File','d.th2':'What for',
+ 'd.files':'<tr><td><a href="01-assembly-3d.html">01 Board assembly</a></td><td>16 steps in 3D: paste, parts, hot plate, bottom side, cleaning</td></tr><tr><td><a href="02-tests-3d.html">02 Testing</a></td><td>14 checks from continuity to alpha rhythm, with fault tables</td></tr><tr><td><a href="03-checklist.html">03 Checklist</a></td><td>Every step on paper, 3 A4 pages</td></tr><tr><td><a href="04-panel-enclosure-3d.html">04 Panel and case</a></td><td>13 steps in 3D: case, sockets, wiring to J3, battery, charging</td></tr><tr><td><a href="viewer.html">viewer.html</a></td><td>View 8 channels in Chrome over Bluetooth</td></tr><tr><td><a href="../hardware/">hardware/</a></td><td>Gerber and stencils for Rezonit and JLCPCB, BOM, original schematic</td></tr><tr><td><a href="../enclosure/">enclosure/</a></td><td>Cutting DXF, 1:1 drawings and drill template</td></tr><tr><td><a href="../firmware/">firmware/</a></td><td>ADS1299 self test and main firmware, PlatformIO projects</td></tr>',
+ 'd.s4':'Which electrodes to choose','d.s4s':'Wet, dry, active, MCScap cap',
+ 'd.el':'For your first recording use wet Ag/AgCl: a dry contact picks up 50 Hz mains hum as large as the alpha rhythm. Full breakdown (RU): <a href="electrodes/01-electrodes-review.html">electrode review</a>, <a href="electrodes/02-mcscap-choice.html">choosing an MCScap</a>, <a href="electrodes/03-active-electrodes.html">active electrodes</a>.',
+ q1:'Do I need soldering experience?',a1:'It helps. The hardest part, ADS1299, has 0.5 mm pin pitch. It is not soldered with an iron: paste goes on through a stencil and the board reflows on a hot plate. Every move is shown in 3D, and after assembly the self test tells you whether all is well.',
+ q2:'How much does it cost?',a2:'The ADS1299 and the board fabrication cost the most. Price estimates for every item are in the <a href="../hardware/shopping-list.csv">board shopping list</a> and the <a href="../enclosure/shopping-list-panel.csv">case list</a> (RU). Electrodes and a cap are extra.',
+ q3:'Is this a medical device?',a3:'No. It is a bench for experiments, neurofeedback and learning. It does not diagnose anything and is not certified.',
+ q4:'How is it different from the original Low-Cost-EEG?',a4:'Same schematic and layout. Drill files and BOM values are fixed, and it adds 3D guides, a self test, main firmware, a signal viewer, a case, an electrode panel and battery power. Changes are listed in the <a href="https://github.com/PaperPit/DIY-EEG-OpenMind#readme">README</a>.',
+ q5:'Does it work offline?',a5:'Yes. Download the repository with Code → Download ZIP, unpack it and open docs/index.html. All 3D guides run locally.',
+ 'f.k':'Ready?','f.t':'Start with the first stage','f.p':'Preparation takes about an hour: read the guides, lay out the parts and print the checklist.','f.cta':'Open the build route',
+ foot:'Board: <a href="https://github.com/XavierAsghar/Low-Cost-EEG">Low-Cost-EEG</a> by Xavier Asghar, GPL v3. Guides, case, panel and firmware of this project use the same license. Progress is stored only in your browser.',
+ 'r.en':'The 3D guides are in Russian for now. The models, part labels and photos speak for themselves, and a browser translator handles the step text well.'
+};
+const ls={get(k,d){try{const v=localStorage.getItem(k);return v===null?d:JSON.parse(v)}catch{return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
+const RU={};
+document.querySelectorAll('[data-i18n]').forEach(el=>RU[el.dataset.i18n]=el.innerHTML);
+document.querySelectorAll('[data-i18n-alt]').forEach(el=>RU[el.dataset.i18nAlt]=el.alt);
+Object.assign(RU,{'w.openBtn':'Открыть глаза','w.close':'Закрыть глаза','w.closed':'Глаза закрыты: появился ровный <b>альфа-ритм около 10 Гц</b>, сильнее всего на затылке (O1, O2, Pz). Именно его вы первым увидите на своём приборе.'});
+let lang=(new URLSearchParams(location.search).get('lang'))||ls.get('eeg-lang',null)||((navigator.language||'ru').toLowerCase().startsWith('ru')?'ru':'en');
+if(lang!=='en')lang='ru';
+const T=k=>(lang==='en'?EN:RU)[k];
+function applyLang(){
+ const D=lang==='en'?EN:RU;
+ document.documentElement.lang=lang;
+ document.querySelectorAll('[data-i18n]').forEach(el=>{const v=D[el.dataset.i18n];if(v!=null)el.innerHTML=v});
+ document.querySelectorAll('[data-i18n-alt]').forEach(el=>{const v=D[el.dataset.i18nAlt];if(v!=null)el.alt=v});
+ document.title=lang==='en'?'People’s EEG · build your own EEG':'Народное ЭЭГ · соберите свой ЭЭГ';
+ document.getElementById('langBtn').innerHTML=lang==='en'?'RU/<b>EN</b>':'<b>RU</b>/EN';
+ splitTagline();updateEyes();renderStages();
+}
+document.getElementById('langBtn').addEventListener('click',()=>{lang=lang==='en'?'ru':'en';ls.set('eeg-lang',lang);applyLang()});
+
+/* ================= theme ================= */
+const root=document.documentElement;
+const savedTheme=ls.get('eeg-theme',null);if(savedTheme)root.dataset.theme=savedTheme;
+document.getElementById('themeBtn').addEventListener('click',()=>{
+ const dark=root.dataset.theme?root.dataset.theme==='dark':matchMedia('(prefers-color-scheme: dark)').matches;
+ root.dataset.theme=dark?'light':'dark';ls.set('eeg-theme',root.dataset.theme);
+});
+
+/* ================= route ================= */
+const META={
+ ru:{a:["Что собираем","Инструменты и раскладка деталей","Нанесение пасты через верхний трафарет","U4 — ADS1299","Питание: U1, U2, U3","Защита входов D1–D5 и TVS-диод D7","Входные резисторы R10–R27","Остальные резисторы","Конденсаторы верхней стороны","ESP32-S3, USB-C и кнопки","Нагревательный столик","Осмотр и исправление","23 детали снизу","Разъёмы, штырьки и выключатель","Отмойте флюс","Первое включение"],
+  t:["Как проверить собранную плату","Осмотр под лупой","Прозвонка мультиметром","Первое включение с ограничением тока","Шесть напряжений","USB и прошивка самотеста","ADS1299 отвечает и он настоящий","Питание, температура и тест-сигнал изнутри","Собственный шум ADS1299","Входные цепи через разъёмы","Пальцевый тест и обрыв электрода","Рабочая прошивка и Bluetooth","Аккумулятор","Живой сигнал: альфа-ритм"],
+  p:["Стенд подключения электродов","Куда подключать: штырьки J3","Корпус из оргстекла 3 мм","Раскладка гнёзд на стенке","Сверлим стенку и ставим гнёзда","Распайка: гнездо → вывод 1 штырька","Аккумулятор, TP4056 и тумблер","Медная фольга внутри корпуса (по желанию)","Прозвонка до первого включения","Как заряжать аккумулятор","Первое включение и обычный запуск","Подключаем шапку MCScap","Если хочется переходную плату"]},
+ en:{a:["What we are building","Tools and part layout","Paste through the top stencil","U4, the ADS1299","Power: U1, U2, U3","Input protection D1–D5 and TVS D7","Input resistors R10–R27","Other resistors","Top side capacitors","ESP32-S3, USB-C and buttons","Hot plate reflow","Inspection and fixes","23 parts on the bottom","Connectors, headers and switch","Wash off the flux","First power on"],
+  t:["How to test the board","Inspection under a magnifier","Continuity check","First power on with current limit","Six voltages","USB and self test firmware","ADS1299 answers and is genuine","Power, temperature, internal test signal","ADS1299 own noise","Input paths through the connectors","Finger test and lead off","Main firmware and Bluetooth","Battery","Live signal: alpha rhythm"],
+  p:["Electrode wiring bench","Where to connect: J3 headers","3 mm acrylic case","Socket layout on the wall","Drill the wall, fit the sockets","Wiring: socket → header pin 1","Battery, TP4056 and switch","Copper foil inside the case (optional)","Continuity before power on","How to charge the battery","First power on and normal start","Connecting an MCScap","If you want an adapter board"]}
+};
 const STAGES=[
- {t:'Подготовка',time:'≈ 1 час',d:'Пролистайте все три 3D-инструкции целиком, не паяя. Сверьте детали со списками покупок и разложите их по подписанным ячейкам. Распечатайте чек-лист.',links:[['03-checklist.html','Чек-лист для печати'],['../hardware/shopping-list.csv','Список покупок: плата'],['../enclosure/shopping-list-panel.csv','Список покупок: панель'],['../hardware/bom.csv','Перечень элементов']],g:'a',file:'01-assembly-3d.html',from:1,to:2,key:'eeg-asm-done'},
- {t:'Сборка платы',time:'≈ 4–6 часов',d:'Паста через трафарет, расстановка деталей по группам, оплавление на столике, осмотр, нижняя сторона феном или паяльником, выводные детали, отмывка.',links:[['01-assembly-3d.html','Открыть часть 1']],g:'a',file:'01-assembly-3d.html',from:3,to:16,key:'eeg-asm-done'},
- {t:'Проверка без питания и первое включение',time:'≈ 30 минут',d:'Осмотр под лупой, прозвонка шин питания, включение с ограничением тока и шесть напряжений на контрольных точках.',links:[['02-tests-3d.html','Открыть часть 2']],g:'t',file:'02-tests-3d.html',from:1,to:5,key:'eeg-test-done'},
- {t:'Самотест ADS1299',time:'≈ 1 час',d:'Прошивка самотеста проверяет чип изнутри: подлинность (ID 0x3E), связь, питание, 8 каналов, шум и путь сигнала через каждый вход.',links:[['../firmware/selftest/','Прошивка самотеста'],['02-tests-3d.html#6','Часть 2, шаг 6']],g:'t',file:'02-tests-3d.html',from:6,to:11,key:'eeg-test-done'},
- {t:'Корпус, панель электродов и питание',time:'≈ 3–4 часа',d:'Корпус из оргстекла, стенка с 10 гнёздами TouchProof, распайка на штырьки J3 без перекрещивания, аккумулятор через TP4056 и тумблер, зарядка и включение.',links:[['04-panel-enclosure-3d.html','Открыть часть 3'],['../enclosure/panel-drill-template-1to1.pdf','Шаблон сверловки'],['../enclosure/case-drawings-1to1.pdf','Чертежи корпуса'],['../enclosure/case-acrylic-3mm-cut.dxf','DXF для лазера']],g:'p',file:'04-panel-enclosure-3d.html',from:1,to:13},
- {t:'Рабочая прошивка и живой сигнал',time:'≈ 1 час',d:'Прошивка firmware/eeg, 250 Гц. Электроды только от аккумулятора. SW3 выключает ток проверки контакта, затем альфа-ритм при закрытых глазах.',links:[['../firmware/eeg/','Прошивка ЭЭГ'],['viewer.html','Просмотр сигнала'],['02-tests-3d.html#12','Часть 2, шаг 12']],g:'t',file:'02-tests-3d.html',from:12,to:14,key:'eeg-test-done'}
+ {ru:['Подготовка','≈ 1 час','Пролистайте все три 3D-инструкции целиком, ничего не паяя. Сверьте детали со списками покупок, разложите их по подписанным ячейкам и распечатайте чек-лист.'],
+  en:['Preparation','≈ 1 hour','Read through all three 3D guides without soldering anything. Check parts against the shopping lists, sort them into labelled cells and print the checklist.'],
+  links:[['03-checklist.html','Чек-лист для печати','Printable checklist'],['../hardware/shopping-list.csv','Список покупок: плата','Shopping list: board'],['../enclosure/shopping-list-panel.csv','Список покупок: панель','Shopping list: panel'],['../hardware/bom.csv','Перечень элементов','Bill of materials']],g:'a',file:'01-assembly-3d.html',from:1,to:2,key:'eeg-asm-done'},
+ {ru:['Сборка платы','≈ 4–6 часов','Паста через трафарет, расстановка деталей по группам, оплавление на столике, осмотр, нижняя сторона феном или паяльником, выводные детали, отмывка.'],
+  en:['Board assembly','≈ 4–6 hours','Paste through the stencil, placing parts by group, hot plate reflow, inspection, bottom side with hot air or iron, through hole parts, cleaning.'],
+  links:[['01-assembly-3d.html','Открыть часть 1','Open part 1']],g:'a',file:'01-assembly-3d.html',from:3,to:16,key:'eeg-asm-done'},
+ {ru:['Проверка и первое включение','≈ 30 минут','Осмотр под лупой, прозвонка шин питания, включение с ограничением тока и шесть напряжений на контрольных точках.'],
+  en:['Checks and first power on','≈ 30 minutes','Inspection under a magnifier, power rail continuity, power on with a current limit, and six voltages at the test points.'],
+  links:[['02-tests-3d.html','Открыть часть 2','Open part 2']],g:'t',file:'02-tests-3d.html',from:1,to:5,key:'eeg-test-done'},
+ {ru:['Самотест ADS1299','≈ 1 час','Прошивка самотеста проверяет чип изнутри: подлинность (ID 0x3E), связь, питание, 8 каналов, шум и путь сигнала через каждый вход.'],
+  en:['ADS1299 self test','≈ 1 hour','The self test firmware checks the chip from the inside: authenticity (ID 0x3E), communication, power, 8 channels, noise and the signal path through every input.'],
+  links:[['../firmware/selftest/','Прошивка самотеста','Self test firmware'],['02-tests-3d.html#6','Часть 2, шаг 6','Part 2, step 6']],g:'t',file:'02-tests-3d.html',from:6,to:11,key:'eeg-test-done'},
+ {ru:['Корпус, панель и питание','≈ 3–4 часа','Корпус из оргстекла, стенка с 10 гнёздами TouchProof, распайка на штырьки J3 без перекрещивания, аккумулятор через TP4056 и тумблер.'],
+  en:['Case, panel and power','≈ 3–4 hours','Acrylic case, a wall with 10 TouchProof sockets, wiring to the J3 headers without crossing, battery through a TP4056 and a switch.'],
+  links:[['04-panel-enclosure-3d.html','Открыть часть 3','Open part 3'],['../enclosure/panel-drill-template-1to1.pdf','Шаблон сверловки','Drill template'],['../enclosure/case-drawings-1to1.pdf','Чертежи корпуса','Case drawings'],['../enclosure/case-acrylic-3mm-cut.dxf','DXF для лазера','Laser DXF']],g:'p',file:'04-panel-enclosure-3d.html',from:1,to:13},
+ {ru:['Прошивка и живой сигнал','≈ 1 час','Рабочая прошивка на 250 Гц, электроды только от аккумулятора. Кнопка SW3 выключает ток проверки контакта, затем альфа-ритм при закрытых глазах.'],
+  en:['Firmware and live signal','≈ 1 hour','Main firmware at 250 Hz, electrodes only on battery power. SW3 turns off the contact check current, then the alpha rhythm with eyes closed.'],
+  links:[['../firmware/eeg/','Прошивка ЭЭГ','EEG firmware'],['viewer.html','Просмотр сигнала','Signal viewer'],['02-tests-3d.html#12','Часть 2, шаг 12','Part 2, step 12']],g:'t',file:'02-tests-3d.html',from:12,to:14,key:'eeg-test-done'}
 ];
-const ls={get(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
 const route=ls.get('eeg-route-done',[]);
 const host=document.getElementById('stages');
-function render(){
- host.innerHTML='';let doneN=0;
+const plural=n=>lang==='en'?(n===1?'step':'steps'):(n%10===1&&n%100!==11?'шаг':(n%10>=2&&n%10<=4&&(n%100<10||n%100>=20))?'шага':'шагов');
+const chev='<svg class="chev" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="m181.66 133.66-80 80a8 8 0 0 1-11.32-11.32L164.69 128 90.34 53.66a8 8 0 0 1 11.32-11.32l80 80a8 8 0 0 1 0 11.32Z"/></svg>';
+function renderStages(){
+ const open=[...host.querySelectorAll('details')].map(d=>d.open);
+ host.innerHTML='';let doneN=0,opened=false;
  STAGES.forEach((s,i)=>{
+  const [title,time,desc]=s[lang];
   const gd=s.key?ls.get(s.key,[]):[];
   let thumbs='',stepDone=0,n=0;
-  for(let k=s.from;k<=s.to;k++){n++;const ok=gd.includes(k-1);if(ok)stepDone++;const id=s.g+String(k).padStart(2,'0');
-   thumbs+=`<a class="th${ok?' ok':''}" href="${s.file}#${k}" title="${META[s.g][k-1]}"><img loading="lazy" src="img/steps/${id}.jpg" alt=""><em>${k}</em><span>${META[s.g][k-1]}</span></a>`}
+  for(let k=s.from;k<=s.to;k++){n++;const ok=gd.includes(k-1);if(ok)stepDone++;const id=s.g+String(k).padStart(2,'0');const nm=META[lang][s.g][k-1];
+   thumbs+=`<a class="th${ok?' ok':''}" href="${s.file}#${k}" title="${nm}"><img loading="lazy" src="img/steps/${id}.jpg" alt=""><em>${k}</em><span>${nm}</span></a>`}
   const done=route.includes(i)||(s.key&&stepDone===n);if(done)doneN++;
-  const d=document.createElement('details');d.className='card stage'+(done?' done':'');if(!done&&doneN===i&&!host.querySelector('details[open]'))d.open=true;
-  d.innerHTML=`<summary><div class="num">${done?'✓':i+1}</div><div><h3>${s.t}</h3><div class="meta">${s.time} · ${n} ${n<5?'шага':'шагов'}${s.key?` · выполнено ${stepDone}`:''}</div></div><div class="chev">›</div></summary>
-  <div class="body"><p>${s.d}</p><div class="strip">${thumbs}</div><div class="row">${s.links.map(([h,l],j)=>`<a ${j==0?'class="btn"':''} href="${h}">${l}</a>`).join('')}<label><input type="checkbox" ${route.includes(i)?'checked':''} data-i="${i}">Этап пройден</label></div></div>`;
+  const d=document.createElement('details');d.className='stage'+(done?' done':'');
+  if(open.length)d.open=open[i];else if(!done&&!opened){d.open=true;opened=true}
+  const doneTxt=s.key?(lang==='en'?` · ${stepDone} done`:` · выполнено ${stepDone}`):'';
+  d.innerHTML=`<summary><div class="num">${done?'✓':i+1}</div><div><h3>${title}</h3><div class="meta">${time} · ${n} ${plural(n)}${doneTxt}</div></div>${chev}</summary>
+  <div class="body"><p>${desc}</p><div class="strip">${thumbs}</div><div class="row">${s.links.map(([h,r,e],j)=>`<a ${j==0?'class="btn primary sm"':''} href="${h}">${lang==='en'?e:r}</a>`).join('')}<label class="check"><input type="checkbox" ${route.includes(i)?'checked':''} data-i="${i}">${lang==='en'?'Stage done':'Этап пройден'}</label></div></div>`;
   host.appendChild(d)});
- document.getElementById('barFill').style.width=(doneN/STAGES.length*100)+'%';
- document.getElementById('progText').textContent=`${doneN} из ${STAGES.length} этапов`;
+ document.getElementById('barFill').style.transform=`scaleX(${doneN/STAGES.length})`;
+ document.getElementById('progText').textContent=lang==='en'?`${doneN} of ${STAGES.length} stages`:`${doneN} из ${STAGES.length} этапов`;
 }
-host.addEventListener('change',e=>{const i=+e.target.dataset.i;const k=route.indexOf(i);e.target.checked?(k<0&&route.push(i)):(k>=0&&route.splice(k,1));ls.set('eeg-route-done',route);const open=[...host.querySelectorAll('details')].map(d=>d.open);render();host.querySelectorAll('details').forEach((d,j)=>d.open=open[j])});
-render();
-// how-to-use hotspots
+host.addEventListener('change',e=>{const i=+e.target.dataset.i;const k=route.indexOf(i);e.target.checked?(k<0&&route.push(i)):(k>=0&&route.splice(k,1));ls.set('eeg-route-done',route);renderStages()});
+
+/* ================= how-to hotspots ================= */
 const P=[[70.7,11],[89.8,15.6],[45.3,7.8],[23.4,58.8],[19.5,39],[97.6,37.5],[74.6,94.8]];
 const pic=document.getElementById('pic');
-P.forEach(([x,y],i)=>{const b=document.createElement('button');b.style.left=x+'%';b.style.top=y+'%';b.textContent=i+1;b.tabIndex=-1;pic.appendChild(b)});
-const items=[...document.querySelectorAll('#legend li')],dots=[...pic.querySelectorAll('button')];
-function hl(k){items.forEach((li,j)=>li.classList.toggle('on',j===k));dots.forEach((b,j)=>b.classList.toggle('on',j===k))}
-items.forEach((li,j)=>{li.addEventListener('mouseenter',()=>hl(j));li.addEventListener('click',()=>hl(j))});
-document.getElementById('legend').addEventListener('mouseleave',()=>hl(-1));
+P.forEach(([x,y],i)=>{const b=document.createElement('button');b.style.left=x+'%';b.style.top=y+'%';b.textContent=i+1;b.tabIndex=-1;b.setAttribute('aria-hidden','true');pic.appendChild(b)});
+const legend=document.getElementById('legend'),dots=[...pic.querySelectorAll('button')];
+function hl(k){[...legend.children].forEach((li,j)=>li.classList.toggle('on',j===k));dots.forEach((b,j)=>b.classList.toggle('on',j===k))}
+legend.addEventListener('mouseover',e=>{const li=e.target.closest('li');if(li)hl([...legend.children].indexOf(li))});
+legend.addEventListener('click',e=>{const li=e.target.closest('li');if(li)hl([...legend.children].indexOf(li))});
+legend.addEventListener('mouseleave',()=>hl(-1));
+
+/* ================= tagline word reveal ================= */
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let tagWords=[];
+function splitTagline(){
+ const p=document.querySelector('[data-split]');
+ let acc=false;p.textContent=p.textContent;
+ const parts=p.textContent.trim().split(/\s+/);p.textContent='';
+ parts.forEach((t,i)=>{const st=t.startsWith('*'),en=t.endsWith('*');if(st)acc=true;const sp=document.createElement('span');sp.className='w'+(acc?' hl':'');sp.textContent=t.replace(/\*/g,'');p.append(sp,i<parts.length-1?' ':'');if(en)acc=false});
+ tagWords=[...p.querySelectorAll('.w')];
+ if(reduce)tagWords.forEach(w=>w.classList.add('on'));else tagScroll();
+}
+let tagTick=false;
+function tagScroll(){tagTick=false;if(!tagWords.length)return;const r=document.getElementById('tagline').getBoundingClientRect();const vh=innerHeight;
+ const prog=Math.min(1,Math.max(0,(vh*.85-r.top)/(r.height+vh*.35)));const lit=Math.round(prog*tagWords.length*1.15);
+ tagWords.forEach((w,i)=>{if(i<lit)w.classList.add('on')})}
+if(!reduce)addEventListener('scroll',()=>{if(!tagTick){tagTick=true;requestAnimationFrame(tagScroll)}},{passive:true});
+
+/* ================= section reveal ================= */
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.08});
+document.querySelectorAll('.rv').forEach(el=>io.observe(el));
+
+/* ================= nav active ================= */
+const navLinks=[...document.querySelectorAll('.nav .links a')];
+const so=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)navLinks.forEach(a=>a.classList.toggle('on',a.hash==='#'+e.target.id))}),{rootMargin:'-45% 0px -50% 0px'});
+['what','route','need','deep'].forEach(id=>so.observe(document.getElementById(id)));
+
+/* ================= EEG scope (simulation) ================= */
+const CH=[['F3','#d9d6cc',.35],['F4','#e0645a',.35],['C3','#e9c74f',.5],['C4','#c8975f',.5],['Cz','#ee9a4d',.55],['Pz','#6cc78f',.8],['O1','#a98be0',1],['O2','#6aa6e8',1]];
+const cv=document.getElementById('scope'),cx=cv.getContext('2d');
+let eyes=false,alphaGain=0,W=0,H=0,buf=[],running=false,last=0,tSim=0;
+const comps=CH.map(()=>[...Array(7)].map(()=>({f:1+Math.random()*28,p:Math.random()*6.28,a:0})).map(c=>(c.a=1/Math.sqrt(c.f),c)));
+const alphaPh=CH.map(()=>Math.random()*6.28);
+function sample(ci,t){let v=0;for(const c of comps[ci])v+=c.a*Math.sin(2*Math.PI*c.f*t+c.p);v+=(Math.random()-.5)*.35;
+ const env=.75+.25*Math.sin(2*Math.PI*.35*t+ci);v+=alphaGain*CH[ci][2]*2.1*env*Math.sin(2*Math.PI*10*t+alphaPh[ci]);return v}
+function size(){const r=cv.getBoundingClientRect(),d=Math.min(2,devicePixelRatio||1);W=Math.round(r.width);H=Math.round(r.height);cv.width=W*d;cv.height=H*d;cx.setTransform(d,0,0,d,0,0);buf=CH.map(()=>new Float32Array(Math.max(1,W-40)));}
+function step(n){const pps=W/4;for(let s=0;s<n;s++){tSim+=1/pps;alphaGain+=((eyes?1:0)-alphaGain)*.004;buf.forEach((b,ci)=>{b.copyWithin(0,1);b[b.length-1]=sample(ci,tSim)})}}
+function draw(){cx.clearRect(0,0,W,H);const lane=H/CH.length;
+ cx.strokeStyle='rgba(255,255,255,.05)';cx.lineWidth=1;for(let x=40;x<W;x+=(W-40)/8){cx.beginPath();cx.moveTo(x,0);cx.lineTo(x,H);cx.stroke()}
+ cx.font='500 11px "JetBrains Mono",monospace';cx.textBaseline='middle';
+ CH.forEach(([n,col],ci)=>{const y0=lane*(ci+.5),b=buf[ci],k=lane*.17;
+  cx.fillStyle='#a3a091';cx.fillText(n,8,y0);cx.strokeStyle=col;cx.lineWidth=1.25;cx.beginPath();
+  for(let i=0;i<b.length;i++){const y=y0-b[i]*k;i?cx.lineTo(40+i,y):cx.moveTo(40,y)}cx.stroke()})}
+function loop(ts){if(!running)return;const dt=Math.min(64,ts-(last||ts));last=ts;step(Math.max(1,Math.round(dt/1000*W/4)));draw();requestAnimationFrame(loop)}
+function start(){if(running)return;running=true;last=0;requestAnimationFrame(loop)}
+function prefill(){step(buf[0].length);draw()}
+size();prefill();
+addEventListener('resize',()=>{size();prefill()});
+if(!reduce){new IntersectionObserver(es=>es.forEach(e=>{e.isIntersecting&&!document.hidden?start():running=false})).observe(cv);
+ document.addEventListener('visibilitychange',()=>{if(document.hidden)running=false})}
+function updateEyes(){const b=document.querySelector('#eyesBtn span');b.innerHTML=eyes?T('w.openBtn'):T('w.close');document.getElementById('eyesNote').innerHTML=eyes?T('w.closed'):T('w.open')}
+document.getElementById('eyesBtn').addEventListener('click',()=>{eyes=!eyes;updateEyes();if(reduce){alphaGain=eyes?1:0;prefill()}});
+
+applyLang();
 </script>
-</body></html>
+</body>
+</html>
