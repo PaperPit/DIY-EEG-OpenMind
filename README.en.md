@@ -29,7 +29,7 @@ Think of it as a low-cost, OpenBCI-style biosignal board that a hobbyist can sol
 | 4 | Flash the ADS1299 self-test (checks chip ID 0x3E) | [firmware/selftest/](firmware/selftest/) | 1 h |
 | 5 | Enclosure, electrode panel, battery and charger | [docs/04-panel-enclosure-3d.html](docs/04-panel-enclosure-3d.html) | 3–4 h |
 | 6 | Recording firmware, Bluetooth, see your alpha rhythm (O1/O2, REF on the earlobe) | [firmware/eeg/](firmware/eeg/), [viewer](docs/viewer.html) | 1 h |
-| 7 | Optional: second floor with another ADS1299, 16 channels (Russian guide) | [docs/05-16-channels.html](docs/05-16-channels.html), [firmware/eeg16/](firmware/eeg16/) | 1–2 days |
+| 7 | Optional: second floor with another ADS1299, 16 channels (Russian guide) | [3D lesson](docs/06-16-channels-3d.html), [text](docs/05-16-channels.html), [firmware/eeg16/](firmware/eeg16/) | 1–2 days |
 
 The 3D guides are in Russian for now, but every step is shown on a rotatable model with part highlighting and a part search (type R27, C15, U4), so they are usable without reading the text. The start page and this README are in English.
 
@@ -42,6 +42,7 @@ docs/                       interactive guides (open docs/index.html)
   03-checklist.html           printable checklist
   04-panel-enclosure-3d.html  case, electrode panel, power, 3D
   05-16-channels.html         second board on top: 16 channels
+  06-16-channels-3d.html      the same in 12 steps in 3D
   viewer.html                 8/16-channel signal viewer over Web Bluetooth (Chrome)
   electrodes/                 electrode reviews: wet Ag/AgCl, MCScap caps, active electrodes
 hardware/
