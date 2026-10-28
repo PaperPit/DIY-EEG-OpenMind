@@ -1,10 +1,14 @@
 # DIY-EEG-OpenMind · Народное ЭЭГ
 
+**Самодельный 8-канальный ЭЭГ своими руками** · **Open-source DIY 8-channel EEG** · ADS1299 + ESP32-S3 · нейрофидбек и BCI · [English README](README.en.md)
+
 <p align="center"><a href="https://paperpit.github.io/DIY-EEG-OpenMind/docs/index.html"><img src="docs/img/start-here.svg" width="760" alt="Начните отсюда: интерактивные инструкции онлайн"></a></p>
 
 <p align="center"><b>👉 Начинайте изучение здесь: <a href="https://paperpit.github.io/DIY-EEG-OpenMind/docs/index.html">paperpit.github.io/DIY-EEG-OpenMind/docs/index.html</a></b><br>Ничего не нужно скачивать: маршрут сборки и 3D-инструкции открываются прямо в браузере.<br><a href="hardware/pcb/gerber-rezonit.zip">Гербер печатной платы</a> — 4 слоя, 100 × 50 мм, сверловка совмещена с контуром.</p>
 
 Восьмиканальный ЭЭГ для нейрофидбека и экспериментов с BCI, который можно собрать дома. В основе открытая плата [Low-Cost-EEG](https://github.com/XavierAsghar/Low-Cost-EEG) (ADS1299 + ESP32-S3, Bluetooth). Этот репозиторий добавляет пошаговые 3D-инструкции, файлы платы, прошивку самотеста и рабочей записи, просмотр сигнала в браузере, корпус из оргстекла и панель электродов TouchProof.
+
+> **In English:** an open-source, build-it-yourself 8-channel EEG (electroencephalography) device for neurofeedback and brain-computer interface (BCI) experiments, a low-cost OpenBCI-style board built on TI ADS1299 and ESP32-S3 with Bluetooth LE. The repo has 43 interactive 3D assembly steps that run in the browser, PCB Gerbers, an acrylic enclosure, self-test and recording firmware (PlatformIO) and a Web Bluetooth signal viewer. Full English overview: **[README.en.md](README.en.md)**.
 
 > Это самодельный прибор для экспериментов, а не медицинское изделие. Прочитайте [SAFETY.md](SAFETY.md) до того, как надевать электроды.
 
@@ -169,3 +173,7 @@ firmware/eeg/               рабочая прошивка: 250 Гц, Bluetooth
 
 Плата, схема и прошивка: [Low-Cost-EEG](https://github.com/XavierAsghar/Low-Cost-EEG), автор Xavier Asghar, GPL v3.
 Инструкции, корпус, панель, самотест и списки покупок этого репозитория распространяются по той же лицензии GPL v3, см. [LICENSE](LICENSE) и [NOTICE.md](NOTICE.md).
+
+---
+
+<sub>Ключевые слова: ЭЭГ своими руками, самодельный ЭЭГ, электроэнцефалограф, нейроинтерфейс, интерфейс мозг-компьютер, нейрофидбек, биологическая обратная связь, ADS1299, ESP32-S3, открытое железо. Keywords: DIY EEG, open-source EEG, open hardware EEG, low-cost EEG, 8-channel EEG, ADS1299 EEG board, ESP32 EEG, brain-computer interface, BCI, neurofeedback, biosignal acquisition, OpenBCI alternative.</sub>
