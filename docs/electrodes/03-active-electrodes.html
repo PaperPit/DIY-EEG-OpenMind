@@ -1,4 +1,18 @@
-<title>Активные ЭЭГ-электроды</title>
+<!doctype html>
+<html lang="ru">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Активные ЭЭГ-электроды своими руками · Народное ЭЭГ</title>
+<meta name="description" content="Активные электроды для ЭЭГ: схема буфера, шумовой бюджет, питание, когда они нужны для ADS1299. DIY active EEG electrodes.">
+<link rel="canonical" href="https://paperpit.github.io/DIY-EEG-OpenMind/docs/electrodes/03-active-electrodes.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Народное ЭЭГ · DIY EEG">
+<meta property="og:title" content="Активные ЭЭГ-электроды своими руками · Народное ЭЭГ">
+<meta property="og:description" content="Активные электроды для ЭЭГ: схема буфера, шумовой бюджет, питание, когда они нужны для ADS1299. DIY active EEG electrodes.">
+<meta property="og:url" content="https://paperpit.github.io/DIY-EEG-OpenMind/docs/electrodes/03-active-electrodes.html">
+<meta property="og:image" content="https://paperpit.github.io/DIY-EEG-OpenMind/docs/img/social-preview.jpg">
+<meta property="og:locale" content="ru_RU">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
@@ -22,7 +36,7 @@
   --good:#6cc070; --warn:#e0a640; --bad:#ef7a6f; color-scheme:dark}
 body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:16px;line-height:1.6;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:32px 64px}
-.wrap{max-width:1040px;margin:0 auto;display:grid;gap:48px}
+.wrap{max-width:1040px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr);gap:48px}
 .prose{max-width:68ch}
 h1,h2,h3{font-family:var(--f-display);text-wrap:balance;line-height:1.2;margin:0}
 h1{font-size:clamp(28px,5vw,42px);font-weight:700;letter-spacing:-.01em}

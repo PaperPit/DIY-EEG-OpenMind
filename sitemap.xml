@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url><loc>https://paperpit.github.io/DIY-EEG-OpenMind/docs/index.html</loc><lastmod>2026-10-28</lastmod><priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://paperpit.github.io/DIY-EEG-OpenMind/docs/index.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://paperpit.github.io/DIY-EEG-OpenMind/docs/index.html?lang=en"/></url>
+  <url><loc>https://paperpit.github.io/DIY-EEG-OpenMind/docs/index.html?lang=en</loc><lastmod>2026-10-28</lastmod><priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://paperpit.github.io/DIY-EEG-OpenMind/docs/index.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://paperpit.github.io/DIY-EEG-OpenMind/docs/index.html?lang=en"/></url>
+  <url><loc>https://paperpit.github.io/DIY-EEG-OpenMind/docs/01-assembly-3d.html</loc><lastmod>2026-10-28</lastmod><priority>0.7</priority></url>
+  <url><loc>https://paperpit.github.io/DIY-EEG-OpenMind/docs/02-tests-3d.html</loc><lastmod>2026-10-28</lastmod><priority>0.7</priority></url>
+  <url><loc>https://paperpit.github.io/DIY-EEG-OpenMind/docs/04-panel-enclosure-3d.html</loc><lastmod>2026-10-28</lastmod><priority>0.7</priority></url>
+  <url><loc>https://paperpit.github.io/DIY-EEG-OpenMind/docs/03-checklist.html</loc><lastmod>2026-10-28</lastmod><priority>0.7</priority></url>
+  <url><loc>https://paperpit.github.io/DIY-EEG-OpenMind/docs/viewer.html</loc><lastmod>2026-10-28</lastmod><priority>0.7</priority></url>
+  <url><loc>https://paperpit.github.io/DIY-EEG-OpenMind/docs/electrodes/01-electrodes-review.html</loc><lastmod>2026-10-28</lastmod><priority>0.7</priority></url>
+  <url><loc>https://paperpit.github.io/DIY-EEG-OpenMind/docs/electrodes/02-mcscap-choice.html</loc><lastmod>2026-10-28</lastmod><priority>0.7</priority></url>
+  <url><loc>https://paperpit.github.io/DIY-EEG-OpenMind/docs/electrodes/03-active-electrodes.html</loc><lastmod>2026-10-28</lastmod><priority>0.7</priority></url>
+</urlset>

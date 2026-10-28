@@ -3,11 +3,26 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Народное ЭЭГ · соберите свой ЭЭГ</title>
-<meta name="description" content="Восьмиканальный ЭЭГ на ADS1299 и ESP32-S3, который можно собрать дома. 43 шага с 3D-моделями прямо в браузере, открытые файлы платы, корпуса и прошивки.">
+<title>Народное ЭЭГ · соберите свой ЭЭГ на ADS1299 и ESP32-S3 (DIY EEG)</title>
+<meta name="description" content="Восьмиканальный ЭЭГ на ADS1299 и ESP32-S3, который можно собрать дома: самодельный электроэнцефалограф для нейрофидбека и нейроинтерфейса (BCI). 43 шага с 3D-моделями прямо в браузере, открытые файлы платы, корпуса и прошивки. Open-source DIY EEG.">
+<meta name="keywords" content="ЭЭГ своими руками, самодельный ЭЭГ, электроэнцефалограф, нейроинтерфейс, нейрофидбек, интерфейс мозг-компьютер, ADS1299, ESP32-S3, DIY EEG, open-source EEG, open hardware EEG, BCI, brain-computer interface, neurofeedback, OpenBCI alternative">
+<link rel="canonical" href="https://paperpit.github.io/DIY-EEG-OpenMind/docs/index.html">
+<link rel="alternate" hreflang="ru" href="https://paperpit.github.io/DIY-EEG-OpenMind/docs/index.html">
+<link rel="alternate" hreflang="en" href="https://paperpit.github.io/DIY-EEG-OpenMind/docs/index.html?lang=en">
+<link rel="alternate" hreflang="x-default" href="https://paperpit.github.io/DIY-EEG-OpenMind/docs/index.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Народное ЭЭГ · DIY EEG">
 <meta property="og:title" content="Народное ЭЭГ: соберите восьмиканальный ЭЭГ дома">
-<meta property="og:description" content="43 шага с 3D-моделями, открытые файлы платы, корпуса и прошивки.">
-<meta property="og:image" content="img/device.jpg">
+<meta property="og:description" content="Open-source DIY 8-channel EEG (ADS1299 + ESP32-S3). 43 шага с 3D-моделями, открытые файлы платы, корпуса и прошивки.">
+<meta property="og:url" content="https://paperpit.github.io/DIY-EEG-OpenMind/docs/index.html">
+<meta property="og:image" content="https://paperpit.github.io/DIY-EEG-OpenMind/docs/img/social-preview.jpg">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="640">
+<meta property="og:image:alt" content="Народное ЭЭГ: самодельный 8-канальный ЭЭГ в корпусе из оргстекла с электродами">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:locale:alternate" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "WebSite", "@id": "https://paperpit.github.io/DIY-EEG-OpenMind/#site", "name": "Народное ЭЭГ", "alternateName": ["People’s EEG", "DIY-EEG-OpenMind", "DIY EEG OpenMind"], "url": "https://paperpit.github.io/DIY-EEG-OpenMind/docs/index.html", "inLanguage": ["ru", "en"]}, {"@type": "SoftwareSourceCode", "name": "Народное ЭЭГ · DIY-EEG-OpenMind", "alternateName": "Open-source DIY 8-channel EEG (ADS1299 + ESP32-S3)", "description": "Open-source DIY 8-channel EEG for neurofeedback and brain-computer interface experiments: ADS1299 + ESP32-S3 with Bluetooth LE, 43 step-by-step 3D assembly guides, PCB Gerbers, acrylic enclosure, firmware and a browser signal viewer. Самодельный 8-канальный ЭЭГ своими руками для нейрофидбека и BCI.", "codeRepository": "https://github.com/PaperPit/DIY-EEG-OpenMind", "url": "https://paperpit.github.io/DIY-EEG-OpenMind/docs/index.html", "image": "https://paperpit.github.io/DIY-EEG-OpenMind/docs/img/social-preview.jpg", "license": "https://www.gnu.org/licenses/gpl-3.0.html", "programmingLanguage": ["C++", "JavaScript"], "runtimePlatform": "ESP32-S3", "inLanguage": ["ru", "en"], "author": {"@type": "Person", "name": "PaperPit", "url": "https://github.com/PaperPit"}, "isBasedOn": "https://github.com/XavierAsghar/Low-Cost-EEG", "keywords": "EEG, DIY EEG, open-source EEG, open hardware, ADS1299, ESP32-S3, BCI, brain-computer interface, neurofeedback, OpenBCI alternative, ЭЭГ, ЭЭГ своими руками, самодельный ЭЭГ, нейроинтерфейс, нейрофидбек, интерфейс мозг-компьютер, электроэнцефалограф"}]}</script>
 <meta name="theme-color" content="#131209">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23131209'/%3E%3Cpath d='M4 17h6l2-6 4 12 3-9 2 3h7' fill='none' stroke='%23e58a42' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -462,7 +477,7 @@ function applyLang(){
  document.documentElement.lang=lang;
  document.querySelectorAll('[data-i18n]').forEach(el=>{const v=D[el.dataset.i18n];if(v!=null)el.innerHTML=v});
  document.querySelectorAll('[data-i18n-alt]').forEach(el=>{const v=D[el.dataset.i18nAlt];if(v!=null)el.alt=v});
- document.title=lang==='en'?'People’s EEG · build your own EEG':'Народное ЭЭГ · соберите свой ЭЭГ';
+ document.title=lang==='en'?'People’s EEG · build your own open-source 8-channel EEG (ADS1299 + ESP32-S3)':'Народное ЭЭГ · соберите свой ЭЭГ на ADS1299 и ESP32-S3 (DIY EEG)';
  document.getElementById('langBtn').innerHTML=lang==='en'?'RU/<b>EN</b>':'<b>RU</b>/EN';
  splitTagline();updateEyes();renderStages();
 }
