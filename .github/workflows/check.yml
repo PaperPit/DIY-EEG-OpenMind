@@ -1,0 +1,46 @@
+# Checks on every pull request and push to main:
+#  1. all three firmwares really compile (PlatformIO, ESP32-S3);
+#  2. every local link and file reference on the site points to an existing file.
+name: Проверка
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  firmware:
+    name: Прошивка ${{ matrix.project }} ${{ matrix.env }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { project: selftest, env: "" }
+          - { project: eeg, env: "" }
+          - { project: eeg16, env: board_a }
+          - { project: eeg16, env: board_b }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: pio-${{ runner.os }}-${{ hashFiles('firmware/**/platformio.ini') }}
+      - run: pip install platformio
+      - name: Сборка
+        working-directory: firmware/${{ matrix.project }}
+        run: pio run ${{ matrix.env && format('-e {0}', matrix.env) || '' }}
+
+  links:
+    name: Ссылки на сайте
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/check-links.py
