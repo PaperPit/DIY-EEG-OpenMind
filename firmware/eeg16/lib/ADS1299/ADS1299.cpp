@@ -19,7 +19,9 @@ void ADS1299::setup(int _DRDY_PIN, int _CS_PIN, int _SCK_PIN, int _MISO_PIN, int
     
     tCLK = 0.489;   // (uS) Assuming default 2.048 MHz clock
     tSDECODE = 5.0; // (uS) tSDECODE > 4 tCLK (Datasheet, pg. 40)
-    scaleFactorUV = 45.0 / (24.0 * 8388608.0);
+    // µV per LSB at gain 24: VREF 4.5 V / gain 24 / 2^23 = 0.02235 µV (datasheet: 1 LSB = 2·VREF/gain/2^24).
+    // The original line (45.0 / ...) gave neither volts nor microvolts. The firmware itself does not use this value.
+    scaleFactorUV = 4.5e6 / (24.0 * 8388608.0);
     outputCount = 0;
 
     // Initalise pins variablkes
