@@ -3,3 +3,5 @@
 *.dxf -text
 *.csv -text
 *.html linguist-documentation
+docs/vendor/** linguist-vendored
+docs/assets/board-data.js linguist-generated
