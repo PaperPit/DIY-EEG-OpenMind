@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru" data-steps="p:13">
+<html lang="ru" data-steps="p:13" data-guide="panel">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Корпус из оргстекла и панель электродов ЭЭГ в 3D · Народное ЭЭГ</title>
@@ -16,6 +16,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="vendor/fonts/fonts.css">
 <script src="assets/guide-kit.js"></script>
+<script src="assets/guide-extras.js"></script>
 <style>
 /* Layout: a workbench — the 3D board is the bench mat on the left, the step card is the instruction sheet on the right; stacked on phones. */
 :root{
@@ -348,7 +349,7 @@ const STEPS = [
  { k:'Электроды', t:'Подключаем шапку MCScap', view:'plugs', anim:'plugs', state:{sockets:1,wires:1,plugs:1,shield:0,lid:1,on:1},
    html:`<ol><li>Подпишите кабели электродов кольцами или кембриками с номером, как на панели.</li>
    <li>Вставьте штекеры TouchProof до упора. Порядок: сначала BIAS, потом REF, потом каналы.</li>
-   <li>Кабели соберите в пучок и закрепите на шее или плече пациента, чтобы они не качались: движение кабеля даёт артефакты сильнее, чем любая наводка.</li></ol>
+   <li>Кабели соберите в пучок и закрепите на плече, чтобы они не качались: движение кабеля даёт артефакты сильнее, чем любая наводка.</li></ol>
    <h2>В прошивке</h2>
    <ul><li>Каналы работают с общим референтом через SRB1. В <span class="mono">firmware/eeg</span> bias берётся с К1 и К2. Для шапки на 8 каналов поставьте <span class="mono">BIAS_SENSP = 0b11111111</span>.</li>
    <li>SW3 включает и выключает ток проверки контакта. Резистор 100 кОм в каждом проводе, включая REF и BIAS, ставится по желанию: защита до 50 мкА ценой шума 0,36 мкВ rms вместо 0,05. Первая запись — мокрыми Ag/AgCl.</li></ul>

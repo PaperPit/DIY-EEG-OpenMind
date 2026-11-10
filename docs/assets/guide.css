@@ -93,3 +93,27 @@ a.back{color:var(--accent-ink)}
   .app{display:block}
   .panel{border:0}
 }
+
+/* ---------- step extras (guide-extras.js) ---------- */
+.kit-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:-4px}
+.kit-meta span{display:inline-flex;align-items:center;gap:6px;font:500 12px/1 var(--f-mono);color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:6px 10px}
+.kit-meta svg{width:14px;height:14px}
+.kit-meta .lvl{display:inline-flex;gap:3px}
+.kit-meta .lvl i{width:6px;height:6px;border-radius:50%;background:var(--line)}
+.kit-meta .lvl i.on{background:var(--accent)}
+.kit-oops,details.more{border:1px solid var(--line);border-radius:10px;padding:0 12px}
+.kit-oops summary,details.more summary{cursor:pointer;padding:10px 0;font:600 14px/1.3 var(--f-body);list-style:none;display:flex;align-items:center;gap:8px}
+.kit-oops summary::-webkit-details-marker,details.more summary::-webkit-details-marker{display:none}
+.kit-oops summary::before,details.more summary::before{content:"+";font:600 16px/1 var(--f-mono);color:var(--accent);width:14px}
+.kit-oops[open] summary::before,details.more[open] summary::before{content:"−"}
+.kit-oops summary span{font:600 11px/1 var(--f-mono);background:var(--warn-soft);color:var(--warn);border-radius:999px;padding:3px 7px}
+.kit-oops dl{margin:0 0 12px;display:flex;flex-direction:column;gap:4px}
+.kit-oops dt{font-weight:600;margin-top:6px}
+.kit-oops dt::before{content:"⚠ ";color:var(--warn)}
+.kit-oops dd{margin:0;color:var(--muted)}
+details.more p{margin:0 0 12px}
+.gl{text-decoration:underline dotted var(--accent);text-underline-offset:3px;text-decoration-thickness:1.5px;cursor:help;border-radius:3px}
+.gl:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.kit-tip{position:fixed;z-index:50;background:var(--panel);color:var(--ink);border:1px solid var(--accent);border-radius:10px;padding:10px 12px;font:400 13px/1.45 var(--f-body);box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.kit-tip b{display:block;font:700 13px/1.3 var(--f-display);margin-bottom:4px;color:var(--accent)}
+@media print{.kit-oops{border:0}.kit-oops dl{display:block}}
