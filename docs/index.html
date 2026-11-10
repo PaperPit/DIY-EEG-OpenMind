@@ -25,8 +25,8 @@
 <script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "WebSite", "@id": "https://paperpit.github.io/DIY-EEG-OpenMind/#site", "name": "Народное ЭЭГ", "alternateName": ["People’s EEG", "DIY-EEG-OpenMind", "DIY EEG OpenMind"], "url": "https://paperpit.github.io/DIY-EEG-OpenMind/docs/index.html", "inLanguage": ["ru", "en"]}, {"@type": "SoftwareSourceCode", "name": "Народное ЭЭГ · DIY-EEG-OpenMind", "alternateName": "Open-source DIY 8-channel EEG (ADS1299 + ESP32-S3)", "description": "Open-source DIY 8-channel EEG for neurofeedback and brain-computer interface experiments: ADS1299 + ESP32-S3 with Bluetooth LE, 43 step-by-step 3D assembly guides, PCB Gerbers, acrylic enclosure, firmware and a browser signal viewer. Самодельный 8-канальный ЭЭГ своими руками для нейрофидбека и BCI.", "codeRepository": "https://github.com/PaperPit/DIY-EEG-OpenMind", "url": "https://paperpit.github.io/DIY-EEG-OpenMind/docs/index.html", "image": "https://paperpit.github.io/DIY-EEG-OpenMind/docs/img/social-preview.jpg", "license": "https://www.gnu.org/licenses/gpl-3.0.html", "programmingLanguage": ["C++", "JavaScript"], "runtimePlatform": "ESP32-S3", "inLanguage": ["ru", "en"], "author": {"@type": "Person", "name": "PaperPit", "url": "https://github.com/PaperPit"}, "isBasedOn": "https://github.com/XavierAsghar/Low-Cost-EEG", "keywords": "EEG, DIY EEG, open-source EEG, open hardware, ADS1299, ESP32-S3, BCI, brain-computer interface, neurofeedback, OpenBCI alternative, ЭЭГ, ЭЭГ своими руками, самодельный ЭЭГ, нейроинтерфейс, нейрофидбек, интерфейс мозг-компьютер, электроэнцефалограф"}]}</script>
 <meta name="theme-color" content="#131209">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23131209'/%3E%3Cpath d='M4 17h6l2-6 4 12 3-9 2 3h7' fill='none' stroke='%23e58a42' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="vendor/fonts/fonts.css">
+<script>document.documentElement.classList.add('js')</script>
 <style>
 /* ---------- tokens ---------- */
 :root{
@@ -86,9 +86,11 @@ h1,h2,h3{text-wrap:balance;margin:0}
 @media (max-width:520px){.nav .logo span{display:none}.nav .cta-txt{display:none}}
 
 /* ---------- reveal ---------- */
-.rv{opacity:0;transform:translateY(32px);transition:opacity .7s var(--ease),transform .7s var(--ease)}
-.rv.in{opacity:1;transform:none}
-@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.rv{transform:none;transition:opacity .3s}.btn:hover,.th:hover{transform:none}}
+/* content is hidden only when the script that reveals it is running; without JS, in print and for search robots it is always visible */
+.js .rv{opacity:0;transform:translateY(32px);transition:opacity .7s var(--ease),transform .7s var(--ease)}
+.js .rv.in{opacity:1;transform:none}
+@media print{.js .rv{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.js .rv{transform:none;transition:opacity .3s}.btn:hover,.th:hover{transform:none}}
 
 /* ---------- sections ---------- */
 section{padding:96px 0 0}
@@ -580,8 +582,9 @@ function tagScroll(){tagTick=false;if(!tagWords.length)return;const r=document.g
 if(!reduce)addEventListener('scroll',()=>{if(!tagTick){tagTick=true;requestAnimationFrame(tagScroll)}},{passive:true});
 
 /* ================= section reveal ================= */
-const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.08});
-document.querySelectorAll('.rv').forEach(el=>io.observe(el));
+if('IntersectionObserver' in window){const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:0,rootMargin:'0px 0px -6% 0px'});
+document.querySelectorAll('.rv').forEach(el=>io.observe(el));}else document.querySelectorAll('.rv').forEach(el=>el.classList.add('in'));
+addEventListener('beforeprint',()=>document.querySelectorAll('.rv').forEach(el=>el.classList.add('in')));
 
 /* ================= nav active ================= */
 const navLinks=[...document.querySelectorAll('.nav .links a')];

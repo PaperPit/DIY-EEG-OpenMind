@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru" data-steps="a:16"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<html lang="ru" data-steps="a:16" data-guide="asm"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>[hidden]{display:none!important}body{margin:0}</style>
 <title>Сборка ЭЭГ на ADS1299 и ESP32-S3 по шагам в 3D · Народное ЭЭГ</title>
 <meta name="description" content="Пошаговая 3D-инструкция сборки самодельного 8-канального ЭЭГ (ADS1299 + ESP32-S3): пайка платы феном и плиткой, трафарет, паста, порядок компонентов. DIY EEG assembly guide.">
@@ -15,6 +15,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="vendor/fonts/fonts.css">
 <script src="assets/guide-kit.js"></script>
+<script src="assets/guide-extras.js"></script>
 <style>
 /* Layout: a workbench — the 3D board is the bench mat on the left, the step card is the instruction sheet on the right; stacked on phones. */
 :root{
@@ -275,7 +276,8 @@ const STEPS = [
    <li><span class="mono">D7</span> ESD5Z5.0, крошечный SOD-523 около USB-C. Полоска катода смотрит вправо, к точке на шелкографии.</li></ol>
    <div class="tip">Детали SC-70 легко развернуть на 180°. Сверяйте каждую с точкой на плате, прежде чем отпустить пинцет.</div>` },
  { k:'Расстановка · 4', t:'Входные резисторы R10–R27', cam:{x:22,y:25,d:72}, anim:'place', table:true,
-   html:`<p>Восемнадцать резисторов 2,2 кОм 0,1 % в столбике у входов, все в корпусе 0603, как у автора. Это вариант на минимальный шум: резисторы добавляют около 0,05 мкВ rms, меньше шума самого АЦП. На R10–R27 номинал должен быть один и тот же. Входные конденсаторы рядом только C0G, не X7R. Ток при неисправности 2,2 кОм почти не ограничивает, поэтому электроды только от аккумулятора. По желанию позже ставят ещё 100 кОм в каждый провод К1–К8, REF и BIAS: ток при пробое около 50 мкА, шум около 0,36 мкВ rms. Расчёт в hardware/INPUT-RESISTORS.md.</p>
+   html:`<p>Восемнадцать резисторов 2,2 кОм 0,1 % в столбике у входов, все в корпусе 0603. У всех R10–R27 номинал должен быть один и тот же: тогда каналы одинаковые.</p>
+   <details class="more"><summary>Подробнее: шум и защита</summary><p>Это вариант на минимальный шум: резисторы добавляют около 0,05 мкВ rms, меньше шума самого АЦП. Входные конденсаторы рядом только C0G, не X7R. Ток при неисправности 2,2 кОм почти не ограничивает, поэтому электроды только от аккумулятора. По желанию позже ставят ещё 100 кОм в каждый провод К1–К8, REF и BIAS: ток при пробое около 50 мкА, шум около 0,36 мкВ rms. Расчёт в <a href="../hardware/INPUT-RESISTORS.md">hardware/INPUT-RESISTORS.md</a>.</p></details>
    <ol><li>Ставьте сверху вниз, от R10 к R27, не перескакивая через ряды.</li>
    <li>Резисторы неполярные, надпись маркировки вверх просто удобнее для проверки.</li></ol>` },
  { k:'Расстановка · 5', t:'Остальные резисторы', cam:{x:55,y:28,d:120}, anim:'place', table:true,
